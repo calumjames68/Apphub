@@ -426,7 +426,7 @@
                     <div id="tg-step-brand" class="mb-6">
                         <label class="block text-sm font-bold mb-2">1. Select Brand</label>
                         <div class="flex gap-2 flex-wrap">
-                            <input type="radio" id="brandBT" name="brand" value="BT" checked>
+                            <input type="radio" id="brandBT" name="brand" value="BT">
                             <label for="brandBT" class="tg-radio-label">BT</label>
                             
                             <input type="radio" id="brandEE" name="brand" value="EE">
@@ -836,7 +836,6 @@
             if (!s) return; 
             let txt = selections.brand === 'BT' ? s.bt_template : s.ee_template;
             
-            // Date logic
             const dateVal = document.getElementById('tg-delayStartDate').value;
             if(s.delayDays > 0 && dateVal) {
                  const [y, m, d] = dateVal.split('-').map(Number);
@@ -898,7 +897,7 @@
 
             // Trigger update in Note Gen
             noteTextArea.dispatchEvent(new Event('input'));
-            saveAutoSave(); // Save to local storage immediately
+            // saveAutoSave(); // Auto save removed per request
 
             // Show feedback
             const status = document.getElementById('tg-statusMessage');
@@ -1094,6 +1093,12 @@
             div.onclick = () => { output.value = txt; };
             historyList.prepend(div);
         }
+        
+        // Force reset on load to "idiot proof" against sticky forms
+        window.addEventListener('load', () => {
+            form.reset();
+            generate();
+        });
 
         // Logic
         const businessRadios = document.querySelectorAll('input[name="business-area"]');
@@ -1166,7 +1171,7 @@
         setupErrorSearch('ng-delay-error-code', 'ng-error-search-results');
         setupErrorSearch('ng-delay-error-code-2', 'ng-error-search-results-2');
         
-        // --- FIXES ---
+        // --- LOGIC ---
         
         // Add 2nd Code Toggle
         document.getElementById('ng-add-second-code').addEventListener('change', (e) => {
@@ -1257,7 +1262,6 @@
                 if(document.getElementById('ng-offline-no-mobile').checked) tags.push("#NoMobile");
                 const num = document.getElementById('ng-offline-number-input').value;
                 if(num) tags.push(`#${num}`);
-                // REMOVED: Error code (err1) pushing to tags
                 
                 if(tags.length > 0) note += `Tags: ${tags.join(' ')}\n`;
 
@@ -1285,84 +1289,10 @@
             output.value = note;
         }
         
-        // --- Auto Save Logic ---
-        saveAutoSave = function() {
-            const formState = {};
-            Array.from(form.elements).forEach(el => {
-                if (el.name || el.id) {
-                    const key = el.name || el.id;
-                    if (el.type === 'radio') {
-                        if (el.checked) formState[key] = el.value;
-                    } else if (el.type === 'checkbox') {
-                        formState[key] = el.checked;
-                    } else {
-                        formState[key] = el.value;
-                    }
-                }
-            });
-            localStorage.setItem('ng_autosave', JSON.stringify(formState));
-        }
+        // --- Auto Save Logic REMOVED per request ---
 
-        function loadAutoSave() {
-            const saved = JSON.parse(localStorage.getItem('ng_autosave'));
-            if (!saved) return;
-            
-            Object.keys(saved).forEach(key => {
-                const val = saved[key];
-                // Try Name (Radios)
-                const radios = document.querySelectorAll(`input[name="${key}"]`);
-                if (radios.length > 0) {
-                    radios.forEach(r => {
-                        if (r.value === val) {
-                             r.checked = true;
-                             r.dispatchEvent(new Event('change')); 
-                        }
-                    });
-                } else {
-                    // Try ID
-                    const el = document.getElementById(key);
-                    if (el) {
-                        if (el.type === 'checkbox') {
-                            el.checked = val;
-                            el.dispatchEvent(new Event('change'));
-                        } else {
-                            el.value = val;
-                            el.dispatchEvent(new Event('input'));
-                        }
-                    }
-                }
-            });
-            
-            // --- POST-LOAD STATE CHECK ---
-            // Ensure UI matches loaded data (e.g. hidden fields)
-            
-            // 1. Check "No Delay"
-            const noDelayChk = document.getElementById('ng-no-delay-checkbox');
-            if(noDelayChk && noDelayChk.checked) {
-                document.getElementById('ng-delay-reason-group').classList.add('ng-hidden');
-            }
-
-            // 2. Check "Add 2nd Code"
-            const addSecondCodeChk = document.getElementById('ng-add-second-code');
-            if(addSecondCodeChk && addSecondCodeChk.checked) {
-                document.getElementById('ng-second-code-container').classList.remove('ng-hidden');
-            }
-
-            // 3. Check "Customer Answered: No"
-            const custAnswerNo = document.querySelector('input[name="customer-answered"][value="No"]');
-            if(custAnswerNo && custAnswerNo.checked) {
-                 document.getElementById('ng-verified-group').classList.add('ng-hidden');
-            }
-            
-            // 4. Check "No Mobile" disabled state
-            const noMobileChk = document.getElementById('ng-offline-no-mobile');
-            if(noMobileChk && noMobileChk.checked) {
-                 document.getElementById('ng-offline-number-input').disabled = true;
-            }
-        }
-
-        form.addEventListener('input', () => { generate(); saveAutoSave(); });
-        form.addEventListener('change', () => { generate(); saveAutoSave(); });
+        form.addEventListener('input', () => { generate(); });
+        form.addEventListener('change', () => { generate(); });
 
         document.getElementById('ng-copy-button').addEventListener('click', () => {
             output.select(); document.execCommand('copy');
@@ -1376,11 +1306,9 @@
         document.getElementById('ng-reset-form-btn').addEventListener('click', () => {
             form.reset();
             generate();
-            saveAutoSave(); 
         });
         
         // Init
-        loadAutoSave();
         generate(); 
     })();
 
