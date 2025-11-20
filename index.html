@@ -1257,7 +1257,7 @@
                 if(document.getElementById('ng-offline-no-mobile').checked) tags.push("#NoMobile");
                 const num = document.getElementById('ng-offline-number-input').value;
                 if(num) tags.push(`#${num}`);
-                if (err1) tags.push(`#${err1}`);
+                // REMOVED: Error code (err1) pushing to tags
                 
                 if(tags.length > 0) note += `Tags: ${tags.join(' ')}\n`;
 
@@ -1332,6 +1332,33 @@
                     }
                 }
             });
+            
+            // --- POST-LOAD STATE CHECK ---
+            // Ensure UI matches loaded data (e.g. hidden fields)
+            
+            // 1. Check "No Delay"
+            const noDelayChk = document.getElementById('ng-no-delay-checkbox');
+            if(noDelayChk && noDelayChk.checked) {
+                document.getElementById('ng-delay-reason-group').classList.add('ng-hidden');
+            }
+
+            // 2. Check "Add 2nd Code"
+            const addSecondCodeChk = document.getElementById('ng-add-second-code');
+            if(addSecondCodeChk && addSecondCodeChk.checked) {
+                document.getElementById('ng-second-code-container').classList.remove('ng-hidden');
+            }
+
+            // 3. Check "Customer Answered: No"
+            const custAnswerNo = document.querySelector('input[name="customer-answered"][value="No"]');
+            if(custAnswerNo && custAnswerNo.checked) {
+                 document.getElementById('ng-verified-group').classList.add('ng-hidden');
+            }
+            
+            // 4. Check "No Mobile" disabled state
+            const noMobileChk = document.getElementById('ng-offline-no-mobile');
+            if(noMobileChk && noMobileChk.checked) {
+                 document.getElementById('ng-offline-number-input').disabled = true;
+            }
         }
 
         form.addEventListener('input', () => { generate(); saveAutoSave(); });
