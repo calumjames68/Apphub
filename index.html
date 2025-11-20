@@ -294,6 +294,15 @@
             margin-top: 0.5rem; margin-bottom: 1rem;
         }
 
+        #app-note-gen input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: rgba(0,0,0,0.1);
+        }
+        [data-theme="dark"] #app-note-gen input:disabled {
+            background-color: rgba(255,255,255,0.05);
+        }
+
         #app-note-gen .btn-choice-group { 
             display: flex; flex-wrap: wrap; gap: 0.75rem; 
             margin-top: 0.5rem; margin-bottom: 1rem;
@@ -417,7 +426,7 @@
                     <div id="tg-step-brand" class="mb-6">
                         <label class="block text-sm font-bold mb-2">1. Select Brand</label>
                         <div class="flex gap-2 flex-wrap">
-                            <input type="radio" id="brandBT" name="brand" value="BT">
+                            <input type="radio" id="brandBT" name="brand" value="BT" checked>
                             <label for="brandBT" class="tg-radio-label">BT</label>
                             
                             <input type="radio" id="brandEE" name="brand" value="EE">
@@ -426,7 +435,7 @@
                     </div>
 
                     <!-- Step 2: Type -->
-                    <div id="tg-step-type" class="mb-6 tg-hidden">
+                    <div id="tg-step-type" class="mb-6">
                         <label class="block text-sm font-bold mb-2">2. Message Type</label>
                         <div class="flex gap-2 flex-wrap">
                             <input type="radio" id="typePre" name="type" value="pre">
@@ -827,6 +836,7 @@
             if (!s) return; 
             let txt = selections.brand === 'BT' ? s.bt_template : s.ee_template;
             
+            // Date logic
             const dateVal = document.getElementById('tg-delayStartDate').value;
             if(s.delayDays > 0 && dateVal) {
                  const [y, m, d] = dateVal.split('-').map(Number);
@@ -1184,10 +1194,12 @@
 
         const resolvedChk = document.getElementById('ng-offline-resolved');
         const noMobileChk = document.getElementById('ng-offline-no-mobile');
+        const numberInput = document.getElementById('ng-offline-number-input');
         
         resolvedChk.addEventListener('change', e => {
             if(e.target.checked) {
                 noMobileChk.checked = false;
+                numberInput.disabled = false; // Ensure enabled if we just unchecked No Mobile
             }
             generate();
         });
@@ -1195,6 +1207,10 @@
         noMobileChk.addEventListener('change', e => {
             if(e.target.checked) {
                 resolvedChk.checked = false;
+                numberInput.value = '';
+                numberInput.disabled = true;
+            } else {
+                numberInput.disabled = false;
             }
             generate();
         });
