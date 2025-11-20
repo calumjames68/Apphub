@@ -545,15 +545,22 @@
                             <div id="ng-workflow-offline">
                                 <div class="ng-card">
                                     <h3 class="text-lg font-bold border-b pb-2 mb-4" style="color: var(--ee-color); border-color: var(--border-color);">Delay Details</h3>
-                                    <div class="relative mb-4">
-                                        <label class="block mb-1 font-medium">Openreach Error Code(s)</label>
+                                    <div class="relative mb-2">
+                                        <label class="block mb-1 font-medium text-sm">Openreach Error Code(s)</label>
                                         <input type="text" id="ng-delay-error-code" placeholder="e.g. 521..." autocomplete="off">
                                         <div id="ng-error-search-results" class="search-results ng-hidden"></div>
                                     </div>
                                     
-                                    <div class="btn-choice-group">
-                                        <label class="btn-choice-label"><input type="checkbox" id="ng-no-delay-checkbox"> No Delay?</label>
+                                    <div class="mb-4 flex items-center gap-4">
+                                        <label class="btn-choice-label text-sm"><input type="checkbox" id="ng-add-second-code"> + Add 2nd Code</label>
+                                        <label class="btn-choice-label text-sm"><input type="checkbox" id="ng-no-delay-checkbox"> No Delay?</label>
                                     </div>
+
+                                    <div id="ng-second-code-container" class="relative mb-4 ng-hidden">
+                                        <input type="text" id="ng-delay-error-code-2" placeholder="Second Error Code..." autocomplete="off">
+                                        <div id="ng-error-search-results-2" class="search-results ng-hidden"></div>
+                                    </div>
+
                                     <div id="ng-delay-reason-group">
                                         <label class="block mb-1 font-medium">Reason</label>
                                         <select id="ng-delay-reason">
@@ -861,7 +868,6 @@
             // Add date info if it's a delay scenario
             if (s.delayDays > 0) {
                  const dateVal = document.getElementById('tg-delayStartDate').value;
-                 // If user input a date, calculate target date, otherwise just note the delay
                  if (dateVal) {
                      const [y, m, d] = dateVal.split('-').map(Number);
                      const dateObj = new Date(y, m - 1, d);
@@ -879,6 +885,7 @@
 
             // Trigger update in Note Gen
             noteTextArea.dispatchEvent(new Event('input'));
+            saveAutoSave(); // Save to local storage immediately
 
             // Show feedback
             const status = document.getElementById('tg-statusMessage');
@@ -967,6 +974,9 @@
     /* =========================================
        APP 2 LOGIC: NOTE GENERATOR
        ========================================= */
+    // Define helper functions globally so they can be used by Text Gen
+    let saveAutoSave; 
+
     (function() {
         // --- FULL DELAY REASONS & ERROR CODES ---
         const delayReasons = [
@@ -1057,7 +1067,7 @@
         const historyList = document.getElementById('ng-history-list');
         const toast = document.getElementById('ng-toast');
         
-        // History
+        // Theme
         document.getElementById('ng-toggle-history').addEventListener('click', () => document.getElementById('note-history-sidebar').classList.add('open'));
         document.getElementById('ng-close-history').addEventListener('click', () => document.getElementById('note-history-sidebar').classList.remove('open'));
         
@@ -1095,47 +1105,64 @@
         });
 
         // Error Code Search Logic
-        const errorInput = document.getElementById('ng-delay-error-code');
-        const errorResults = document.getElementById('ng-error-search-results');
-
-        errorInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            errorResults.innerHTML = '';
+        function setupErrorSearch(inputId, resultsId) {
+            const input = document.getElementById(inputId);
+            const results = document.getElementById(resultsId);
             
-            if(term.length < 1) {
-                errorResults.classList.add('ng-hidden');
-                return;
-            }
+            input.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                results.innerHTML = '';
+                
+                if(term.length < 1) {
+                    results.classList.add('ng-hidden');
+                    return;
+                }
 
-            const matches = errorCodes.filter(ec => 
-                ec.code.toLowerCase().includes(term) || ec.description.toLowerCase().includes(term)
-            );
+                const matches = errorCodes.filter(ec => 
+                    ec.code.toLowerCase().includes(term) || ec.description.toLowerCase().includes(term)
+                );
 
-            if(matches.length > 0) {
-                errorResults.classList.remove('ng-hidden');
-                matches.forEach(match => {
-                    const div = document.createElement('div');
-                    div.className = 'search-result-item';
-                    div.innerHTML = `<strong>${match.code}</strong> - ${match.description}`;
-                    div.onclick = () => {
-                        errorInput.value = match.code;
-                        errorResults.classList.add('ng-hidden');
-                        generate();
-                    };
-                    errorResults.appendChild(div);
-                });
-            } else {
-                errorResults.classList.add('ng-hidden');
-            }
-        });
+                if(matches.length > 0) {
+                    results.classList.remove('ng-hidden');
+                    matches.forEach(match => {
+                        const div = document.createElement('div');
+                        div.className = 'search-result-item';
+                        div.innerHTML = `<strong>${match.code}</strong> - ${match.description}`;
+                        div.onclick = () => {
+                            input.value = match.code;
+                            results.classList.add('ng-hidden');
+                            generate();
+                        };
+                        results.appendChild(div);
+                    });
+                } else {
+                    results.classList.add('ng-hidden');
+                }
+            });
 
-        document.addEventListener('click', (e) => {
-            if (!errorInput.contains(e.target) && !errorResults.contains(e.target)) {
-                errorResults.classList.add('ng-hidden');
-            }
-        });
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !results.contains(e.target)) {
+                    results.classList.add('ng-hidden');
+                }
+            });
+        }
+
+        setupErrorSearch('ng-delay-error-code', 'ng-error-search-results');
+        setupErrorSearch('ng-delay-error-code-2', 'ng-error-search-results-2');
         
         // --- FIXES ---
+        
+        // Add 2nd Code Toggle
+        document.getElementById('ng-add-second-code').addEventListener('change', (e) => {
+             document.getElementById('ng-second-code-container').classList.toggle('ng-hidden', !e.target.checked);
+        });
+
+        // No Delay Toggle
+        document.getElementById('ng-no-delay-checkbox').addEventListener('change', (e) => {
+             document.getElementById('ng-delay-reason-group').classList.toggle('ng-hidden', e.target.checked);
+             generate();
+        });
+
         const container = document.querySelector('#app-note-gen');
         
         container.querySelectorAll('input[name="customer-answered"]').forEach(r => {
@@ -1164,46 +1191,76 @@
         
         function generate() {
             const fd = new FormData(form);
-            let note = `Business Area: ${fd.get('business-area')}\n`;
-            note += `Time: ${new Date().toLocaleString()}\n`;
-            
+            const now = new Date();
+            const timeStr = now.toLocaleDateString() + ", " + now.toLocaleTimeString();
+
+            let note = ``;
+
             if(fd.get('business-area') === 'Offline') {
-                note += `--- OFFLINE ---\n`;
-                note += `Error Code: ${document.getElementById('ng-delay-error-code').value || 'N/A'}\n`;
-                note += `Reason: ${document.getElementById('ng-delay-reason').value || 'N/A'}\n`;
-                note += `Cust Answered: ${fd.get('customer-answered') || 'N/A'}\n`;
-                
+                const err1 = document.getElementById('ng-delay-error-code').value;
+                const err2 = document.getElementById('ng-delay-error-code-2').value;
+                let errors = err1 || 'N/A';
+                if(err2) errors += `, ${err2}`;
+
+                let reason = document.getElementById('ng-delay-reason').value || 'N/A';
+                if(document.getElementById('ng-no-delay-checkbox').checked) reason = "No Delay";
+
+                note += `========================================\n`;
+                note += `          OFFLINE INTERACTION           \n`;
+                note += `========================================\n`;
+                note += `Timestamp: ${timeStr}\n\n`;
+
+                note += `[ DELAY DETAILS ]\n`;
+                note += `----------------------------------------\n`;
+                note += `Error Code(s) : ${errors}\n`;
+                note += `Delay Reason  : ${reason}\n\n`;
+
+                note += `[ CONTACT ATTEMPTS ]\n`;
+                note += `----------------------------------------\n`;
+                note += `Cust Answered : ${fd.get('customer-answered') || 'N/A'}\n`;
                 if(fd.get('customer-answered') === 'Yes') {
-                     note += `Verified: ${fd.get('customer-verified') || 'N/A'}\n`;
+                    note += `Verified      : ${fd.get('customer-verified') || 'N/A'}\n`;
                 }
+                note += `SMS Sent      : Pre (${fd.get('pre-text-sent') || 'N/A'}) | Post (${fd.get('post-text-sent') || 'N/A'})\n\n`;
+
+                note += `[ RESOLUTION ]\n`;
+                note += `----------------------------------------\n`;
                 
-                note += `Pre-Text: ${fd.get('pre-text-sent') || 'N/A'} | Post-Text: ${fd.get('post-text-sent') || 'N/A'}\n`;
-                
-                if(document.getElementById('ng-offline-resolved').checked) note += `#Resolved `;
-                if(document.getElementById('ng-offline-no-mobile').checked) note += `#NoMobile `;
+                let tags = [];
+                if(document.getElementById('ng-offline-resolved').checked) tags.push("#Resolved");
+                if(document.getElementById('ng-offline-no-mobile').checked) tags.push("#NoMobile");
                 const num = document.getElementById('ng-offline-number-input').value;
-                if(num) note += `#${num}`;
-                note += `\n`;
+                if(num) tags.push(`#${num}`);
+                if (err1) tags.push(`#${err1}`);
+                
+                if(tags.length > 0) note += `Tags: ${tags.join(' ')}\n`;
 
             } else {
-                note += `--- DI ---\n`;
-                note += `Call Origin: ${fd.get('di-call-from-guide')}\n`;
+                note += `========================================\n`;
+                note += `             DI INTERACTION             \n`;
+                note += `========================================\n`;
+                note += `Timestamp: ${timeStr}\n\n`;
+                
+                note += `Call Origin   : ${fd.get('di-call-from-guide')}\n`;
                 if(fd.get('di-call-from-guide') === 'Yes') {
-                     note += `Flow: ${document.getElementById('ng-di-albert-flow').value}\n`;
+                     note += `Flow          : ${document.getElementById('ng-di-albert-flow').value}\n`;
                 }
-                note += `Brand: ${fd.get('di-brand') || 'N/A'}\n`;
+                note += `Brand         : ${fd.get('di-brand') || 'N/A'}\n`;
                 const issue = document.getElementById('ng-di-issue-summary').value;
-                if(issue) note += `Issue: ${issue}\n`;
+                if(issue) note += `Issue Summary : ${issue}\n`;
+                note += `\n`;
             }
             
             const addInfo = document.getElementById('ng-additional-info').value;
-            if(addInfo) note += `\nNotes:\n${addInfo}`;
+            if(addInfo) {
+                note += `Notes:\n${addInfo}`;
+            }
 
             output.value = note;
         }
         
         // --- Auto Save Logic ---
-        function saveAutoSave() {
+        saveAutoSave = function() {
             const formState = {};
             Array.from(form.elements).forEach(el => {
                 if (el.name || el.id) {
@@ -1232,7 +1289,7 @@
                     radios.forEach(r => {
                         if (r.value === val) {
                              r.checked = true;
-                             r.dispatchEvent(new Event('change')); // Trigger logic
+                             r.dispatchEvent(new Event('change')); 
                         }
                     });
                 } else {
@@ -1266,7 +1323,7 @@
         document.getElementById('ng-reset-form-btn').addEventListener('click', () => {
             form.reset();
             generate();
-            saveAutoSave(); // Clear autosave effectively
+            saveAutoSave(); 
         });
         
         // Init
