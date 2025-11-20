@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Toolkit Hub</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind (Optional utility classes) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* --- GLOBAL VARIABLES --- */
+        :root {
+            --bt-color: #5514b4;
+            --ee-color: #007b85;
+            --brand-active: var(--bt-color); /* Default to BT */
+            
+            /* Light Mode Defaults */
+            --bg-body: #f3f4f6;
+            --bg-sidebar: #1f2937;
+            --bg-card: #ffffff;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --border-color: #e5e7eb;
+            --input-bg: #ffffff;
+        }
+
+        /* --- DARK MODE VARIABLES --- */
+        [data-theme="dark"] {
+            --bg-body: #111827; /* Darker background */
+            --bg-sidebar: #000000; /* Darker sidebar */
+            --bg-card: #1f2937; /* Gray 800 */
+            --text-main: #f3f4f6; /* Light text */
+            --text-sub: #9ca3af; /* Gray 400 */
+            --border-color: #374151; /* Gray 700 */
+            --input-bg: #374151; /* Gray 700 */
+        }
+
+        /* --- GLOBAL STYLES --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #hub-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        #hub-sidebar {
+            width: 80px;
+            background-color: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            flex-shrink: 0;
+            transition: width 0.3s;
+            z-index: 1000;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        #hub-sidebar:hover {
+            width: 220px;
+        }
+
+        .nav-group {
+            flex: 1;
+            width: 100%;
+        }
+
+        .nav-item {
+            width: 100%;
+            padding: 15px 0;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #9ca3af;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+            border-left-color: var(--brand-active); /* Dynamic Brand Color */
+        }
+
+        .nav-icon {
+            min-width: 80px;
+            display: flex;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .nav-label {
+            font-weight: 500;
+            font-size: 0.95rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        #hub-sidebar:hover .nav-label {
+            opacity: 1;
+        }
+
+        /* Bottom Actions in Sidebar */
+        .sidebar-footer {
+            width: 100%;
+            padding-bottom: 20px;
+        }
+
+        /* --- MAIN CONTENT --- */
+        #hub-content {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .app-view {
+            display: none;
+            min-height: 100%;
+            /* Padding added to ensure content isn't flush against sidebar */
+        }
+
+        .app-view.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =========================================
+           APP 1: TEXT GENERATOR STYLES
+           ========================================= */
+        #app-text-gen {
+            padding: 40px;
+            /* Local variables that update based on brand selection */
+            --active-color: var(--brand-active);
+            --active-hover: #4b5563;
+            --active-light: #e5e7eb;
+        }
+
+        /* Specific overrides for brands in light/dark mode */
+        #app-text-gen.theme-bt { 
+            --active-light: #f2effb;
+        }
+        #app-text-gen.theme-ee { 
+            --active-light: #e0f7fa;
+        }
+        
+        /* Dark mode specific active light adjustments */
+        [data-theme="dark"] #app-text-gen.theme-bt { --active-light: rgba(85, 20, 180, 0.2); }
+        [data-theme="dark"] #app-text-gen.theme-ee { --active-light: rgba(0, 123, 133, 0.2); }
+
+        #app-text-gen .tg-container {
+            width: 100%;
+            max-width: 720px;
+            background-color: var(--bg-card);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border-top: 6px solid var(--active-color);
+            margin: 0 auto;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .tg-hidden { display: none !important; }
+        
+        /* Form Elements */
+        #app-text-gen input[type="radio"] { display: none; }
+        
+        #app-text-gen .tg-radio-label {
+            flex: 1; text-align: center; padding: 12px 16px;
+            background-color: var(--input-bg); 
+            border: 1px solid var(--border-color);
+            border-radius: 8px; cursor: pointer; 
+            color: var(--text-sub);
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        
+        #app-text-gen .tg-radio-label:hover {
+            border-color: var(--active-color);
+        }
+
+        #app-text-gen input[type="radio"]:checked + .tg-radio-label {
+            background-color: var(--active-light);
+            border-color: var(--active-color);
+            color: var(--active-color);
+            font-weight: 700;
+            box-shadow: 0 0 0 1px var(--active-color);
+        }
+
+        /* Dropdown */
+        #app-text-gen .scenario-dropdown {
+            display: none; position: absolute; top: 100%; left: 0; right: 0;
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color); border-radius: 8px;
+            max-height: 300px; overflow-y: auto; z-index: 10;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+        }
+        #app-text-gen .scenario-dropdown.show { display: block; }
+        
+        #app-text-gen .scenario-item { 
+            padding: 10px 16px; cursor: pointer; 
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        #app-text-gen .scenario-item:hover { 
+            background-color: var(--active-light); 
+            color: var(--active-color); 
+        }
+
+        /* Inputs */
+        #app-text-gen input[type="text"],
+        #app-text-gen input[type="date"],
+        #app-text-gen select,
+        #app-text-gen textarea {
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+        
+        #app-text-gen textarea::placeholder { color: var(--text-sub); opacity: 0.7; }
+
+
+        /* =========================================
+           APP 2: NOTE GENERATOR STYLES
+           ========================================= */
+        #app-note-gen {
+            --ng-header-height: 60px;
+            /* Note Gen specific overrides handled by global variables now */
+        }
+
+        #app-note-gen .ng-header {
+            height: var(--ng-header-height);
+            background: linear-gradient(135deg, var(--bt-color) 0%, var(--ee-color) 100%);
+            color: white;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 2rem;
+            position: sticky; top: 0; z-index: 50;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #app-note-gen .ng-main-container {
+            max-width: 1400px; margin: 2rem auto; padding: 0 2rem;
+            display: grid; grid-template-columns: 1fr; gap: 3rem;
+            background-color: var(--ng-bg-color); /* Ensure background fills */
+        }
+
+        @media (min-width: 1024px) {
+            #app-note-gen .ng-main-container { grid-template-columns: 2fr 1fr; align-items: start; }
+        }
+
+        #app-note-gen .ng-card {
+            background-color: var(--bg-card);
+            border-radius: 12px; padding: 2rem; margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        #app-note-gen input[type="text"], 
+        #app-note-gen input[type="date"], 
+        #app-note-gen select, 
+        #app-note-gen textarea {
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            width: 100%; padding: 0.85rem; border-radius: 6px;
+            display: block;
+            margin-top: 0.5rem; margin-bottom: 1rem;
+        }
+
+        #app-note-gen .btn-choice-group { 
+            display: flex; flex-wrap: wrap; gap: 0.75rem; 
+            margin-top: 0.5rem; margin-bottom: 1rem;
+        }
+
+        #app-note-gen .btn-choice-label {
+            display: inline-flex; align-items: center; padding: 0.6rem 1.2rem;
+            background-color: var(--input-bg); 
+            border: 1px solid var(--border-color);
+            border-radius: 50px; cursor: pointer; font-size: 0.95rem; 
+            color: var(--text-main); transition: all 0.2s;
+            flex-shrink: 0; white-space: nowrap;
+        }
+        #app-note-gen .btn-choice-label:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+        /* Hover for dark mode */
+        [data-theme="dark"] #app-note-gen .btn-choice-label:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        #app-note-gen .btn-choice-label:has(input:checked) {
+            background-color: var(--ee-color); color: white; border-color: var(--ee-color);
+        }
+        
+        #app-note-gen input[type="radio"], #app-note-gen input[type="checkbox"] {
+           display: inline-block; width: auto; margin-right: 0.5rem;
+        }
+        #app-note-gen .btn-choice-label input { display: none; }
+
+        #app-note-gen .search-results {
+            position: absolute; z-index: 50; background: var(--bg-card);
+            border: 1px solid var(--border-color); border-top: none;
+            width: 100%; max-height: 200px; overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border-radius: 0 0 6px 6px;
+        }
+        #app-note-gen .search-result-item {
+            padding: 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border-color);
+        }
+        #app-note-gen .search-result-item:hover { background-color: var(--input-bg); }
+        #app-note-gen .search-result-item strong { color: var(--ee-color); }
+
+        #app-note-gen .ng-hidden { display: none !important; }
+        
+        #app-note-gen #output-note {
+            background-color: #111827; color: #d1d5db; font-family: 'Roboto Mono', monospace;
+            border: 1px solid var(--border-color); line-height: 1.6; min-height: 250px;
+        }
+        
+        /* History Sidebar - FIXED POSITIONING FIX */
+        #note-history-sidebar {
+            position: fixed; /* Changed from absolute to fixed */
+            top: 0; right: -400px; width: 350px; height: 100vh; /* Full viewport height */
+            background: var(--bg-card); z-index: 2000; transition: right 0.3s ease;
+            padding: 1.5rem; border-left: 1px solid var(--border-color);
+            color: var(--text-main); overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        }
+        #note-history-sidebar.open { right: 0; }
+        #note-history-sidebar .text-sm {
+            padding: 0.75rem; margin-bottom: 0.5rem; border-color: var(--border-color);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="hub-container">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <nav id="hub-sidebar">
+            <div class="nav-group">
+                <div class="nav-item active" onclick="switchTab('text-gen', this)">
+                    <div class="nav-icon">💬</div>
+                    <div class="nav-label">Text Gen</div>
+                </div>
+                <div class="nav-item" onclick="switchTab('note-gen', this)">
+                    <div class="nav-icon">📝</div>
+                    <div class="nav-label">Note Gen</div>
+                </div>
+                <div class="nav-item" onclick="switchTab('bug-board', this)">
+                    <div class="nav-icon">🐛</div>
+                    <div class="nav-label">Bug Board</div>
+                </div>
+            </div>
+
+            <!-- Sidebar Footer with Dark Mode -->
+            <div class="sidebar-footer">
+                <div class="nav-item" id="global-theme-toggle">
+                    <div class="nav-icon" id="theme-icon">🌙</div>
+                    <div class="nav-label">Dark Mode</div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- CONTENT AREA -->
+        <main id="hub-content">
+
+            <!-- ======================================================= -->
+            <!-- APP 1: TEXT GENERATOR -->
+            <!-- ======================================================= -->
+            <div id="app-text-gen" class="app-view active theme-bt">
+                <div id="tg-appContainer" class="tg-container">
+                    <!-- Header -->
+                    <div class="flex justify-between items-center mb-8 border-b pb-5 border-gray-200" style="border-color: var(--border-color);">
+                        <h1 class="text-2xl font-bold" style="color: var(--text-main);">Text Generator</h1>
+                        <div class="flex gap-4 items-center">
+                            <!-- SVG Logos -->
+                            <svg class="h-8 w-auto transition-all duration-300 logo-bt-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="#5514b4">
+                                <circle cx="50" cy="50" r="48" stroke="#5514b4" stroke-width="4" fill="none"/>
+                                <text x="50" y="68" font-family="Arial" font-size="50" font-weight="bold" text-anchor="middle" fill="#5514b4">BT</text>
+                            </svg>
+                            <svg class="h-8 w-auto transition-all duration-300 logo-ee-svg" viewBox="0 0 80 40" xmlns="http://www.w3.org/2000/svg" fill="#007b85">
+                                <text x="0" y="32" font-family="Arial" font-size="40" font-weight="bold" fill="#007b85">EE</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Brand -->
+                    <div id="tg-step-brand" class="mb-6">
+                        <label class="block text-sm font-bold mb-2">1. Select Brand</label>
+                        <div class="flex gap-2 flex-wrap">
+                            <input type="radio" id="brandBT" name="brand" value="BT" checked>
+                            <label for="brandBT" class="tg-radio-label">BT</label>
+                            
+                            <input type="radio" id="brandEE" name="brand" value="EE">
+                            <label for="brandEE" class="tg-radio-label">EE</label>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Type -->
+                    <div id="tg-step-type" class="mb-6">
+                        <label class="block text-sm font-bold mb-2">2. Message Type</label>
+                        <div class="flex gap-2 flex-wrap">
+                            <input type="radio" id="typePre" name="type" value="pre">
+                            <label for="typePre" class="tg-radio-label">Pre-Text (Before Call)</label>
+                            
+                            <input type="radio" id="typePost" name="type" value="post">
+                            <label for="typePost" class="tg-radio-label">Post-Text (After Call)</label>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Category -->
+                    <div id="tg-step-category" class="mb-6 tg-hidden">
+                        <label class="block text-sm font-bold mb-2">3. Category</label>
+                        <div class="flex gap-2 flex-wrap">
+                            <input type="radio" id="catAll" name="category" value="All">
+                            <label for="catAll" class="tg-radio-label">All</label>
+                            
+                            <input type="radio" id="catDelays" name="category" value="Delays">
+                            <label for="catDelays" class="tg-radio-label">Delays</label>
+                            
+                            <input type="radio" id="catSetUps" name="category" value="Set Up / General">
+                            <label for="catSetUps" class="tg-radio-label">Set Up / General</label>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Contact -->
+                    <div id="tg-step-contact" class="mb-6 tg-hidden">
+                        <label class="block text-sm font-bold mb-2">4. Was contact made?</label>
+                        <div class="flex gap-2 flex-wrap">
+                            <input type="radio" id="contactYes" name="contactStatus" value="Yes">
+                            <label for="contactYes" class="tg-radio-label">Yes, spoke to customer</label>
+                            
+                            <input type="radio" id="contactNo" name="contactStatus" value="No">
+                            <label for="contactNo" class="tg-radio-label">No, left message/VM</label>
+                        </div>
+                    </div>
+
+                    <!-- Final Step -->
+                    <div id="tg-step-scenario" class="mb-6 tg-hidden">
+                        <label class="block text-sm font-bold mb-2" for="tg-scenarioInput">Select Message Template</label>
+                        <div class="relative">
+                            <input type="text" id="tg-scenarioInput" placeholder="Search templates..." autocomplete="off" class="w-full p-3 border rounded-lg mb-2">
+                            <div id="tg-scenarioDropdown" class="scenario-dropdown"></div>
+                        </div>
+
+                        <!-- Context Box: Delay -->
+                        <div id="tg-delay-options" class="bg-opacity-50 border p-4 rounded-lg my-4 tg-hidden" style="background-color: var(--active-light); border-color: var(--active-color);">
+                            <label class="block font-bold text-sm mb-2">Delay Identified On:</label>
+                            <input type="date" id="tg-delayStartDate" class="w-full p-2 border rounded">
+                        </div>
+
+                        <!-- Output -->
+                        <div class="relative mt-4">
+                            <textarea id="tg-messageOutput" class="w-full p-3 border rounded-lg min-h-[180px]" placeholder="Generated message..."></textarea>
+                            <div id="tg-charCounter" class="text-right text-xs text-gray-500 mt-1">0 chars</div>
+                        </div>
+
+                        <!-- Context Box: Callback -->
+                        <div id="tg-callback-options" class="bg-opacity-50 border p-4 rounded-lg my-4 tg-hidden" style="background-color: var(--active-light); border-color: var(--active-color);">
+                            <label class="block font-bold text-sm mb-2">Insert Callback Time:</label>
+                            <div class="flex gap-2">
+                                <input type="date" id="tg-callbackDate" class="flex-1 p-2 border rounded">
+                                <select id="tg-callbackTime" class="flex-1 p-2 border rounded"></select>
+                            </div>
+                            <button id="tg-insertDateTime" class="mt-2 text-white text-sm py-1 px-3 rounded" style="background-color: var(--active-color);">Insert into Message</button>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex gap-3 mt-6">
+                            <button id="tg-resetButton" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded hover:bg-gray-300">Reset</button>
+                            <button id="tg-copyButton" class="flex-1 text-white font-bold py-3 rounded hover:opacity-90" style="background-color: var(--active-color);">Copy Message</button>
+                            <button id="tg-sendToNoteButton" class="flex-1 text-white font-bold py-3 rounded hover:opacity-90" style="background-color: var(--ee-color);">Send to Note</button>
+                        </div>
+                        <div id="tg-statusMessage" class="text-center text-green-600 font-bold mt-2 opacity-0 transition-opacity">Message copied!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================= -->
+            <!-- APP 2: NOTE GENERATOR -->
+            <!-- ======================================================= -->
+            <div id="app-note-gen" class="app-view">
+                
+                <!-- Scoped Header for Note App -->
+                <div class="ng-header">
+                    <div class="font-bold text-xl">NoteTemplate <span class="font-light">BTGroup</span></div>
+                    <div class="flex gap-3">
+                        <button type="button" class="bg-white/20 text-white px-4 py-1 rounded-full text-sm hover:bg-white/30" id="ng-toggle-history">📜 History</button>
+                    </div>
+                </div>
+
+                <!-- History Sidebar -->
+                <div id="note-history-sidebar">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold">History</h3>
+                        <span class="cursor-pointer text-xl" id="ng-close-history">&times;</span>
+                    </div>
+                    <div id="ng-history-list" class="space-y-2"></div>
+                </div>
+
+                <div class="ng-main-container">
+                    <!-- Left Col: Form -->
+                    <section>
+                        <form id="ng-note-form">
+                            
+                            <!-- Business Area -->
+                            <div class="ng-card">
+                                <h3 class="text-lg font-bold border-b pb-2 mb-4" style="color: var(--ee-color); border-color: var(--border-color);">Select Business Area</h3>
+                                <div class="btn-choice-group">
+                                    <label class="btn-choice-label"><input type="radio" name="business-area" value="Offline" checked> Offline</label>
+                                    <label class="btn-choice-label"><input type="radio" name="business-area" value="DI"> DI</label>
+                                </div>
+                            </div>
+
+                            <!-- Workflow: Offline -->
+                            <div id="ng-workflow-offline">
+                                <div class="ng-card">
+                                    <h3 class="text-lg font-bold border-b pb-2 mb-4" style="color: var(--ee-color); border-color: var(--border-color);">Delay Details</h3>
+                                    <div class="relative mb-4">
+                                        <label class="block mb-1 font-medium">Openreach Error Code(s)</label>
+                                        <input type="text" id="ng-delay-error-code" placeholder="e.g. 521..." autocomplete="off">
+                                        <div id="ng-error-search-results" class="search-results ng-hidden"></div>
+                                    </div>
+                                    
+                                    <div class="btn-choice-group">
+                                        <label class="btn-choice-label"><input type="checkbox" id="ng-no-delay-checkbox"> No Delay?</label>
+                                    </div>
+                                    <div id="ng-delay-reason-group">
+                                        <label class="block mb-1 font-medium">Reason</label>
+                                        <select id="ng-delay-reason">
+                                            <option value="" disabled selected>Select reason...</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="ng-card">
+                                    <h3 class="text-lg font-bold border-b pb-2 mb-4" style="color: var(--ee-color); border-color: var(--border-color);">Contact Attempts</h3>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block mb-1 font-medium">Did the customer answer?</label>
+                                            <div class="btn-choice-group">
+                                                <label class="btn-choice-label"><input type="radio" name="customer-answered" value="Yes"> Yes</label>
+                                                <label class="btn-choice-label"><input type="radio" name="customer-answered" value="No"> No</label>
+                                            </div>
+                                        </div>
+                                        <div id="ng-verified-group">
+                                            <label class="block mb-1 font-medium">Account Verified?</label>
+                                            <div class="btn-choice-group">
+                                                <label class="btn-choice-label"><input type="radio" name="customer-verified" value="Yes"> Yes</label>
+                                                <label class="btn-choice-label"><input type="radio" name="customer-verified" value="No"> No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4 mt-4">
+                                        <div>
+                                            <label class="block mb-1 font-medium">Pre-call Text Sent?</label>
+                                            <div class="btn-choice-group">
+                                                <label class="btn-choice-label"><input type="radio" name="pre-text-sent" value="Yes"> Yes</label>
+                                                <label class="btn-choice-label"><input type="radio" name="pre-text-sent" value="No"> No</label>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block mb-1 font-medium">Post-call Text Sent?</label>
+                                            <div class="btn-choice-group">
+                                                <label class="btn-choice-label"><input type="radio" name="post-text-sent" value="Yes"> Yes</label>
+                                                <label class="btn-choice-label"><input type="radio" name="post-text-sent" value="No"> No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="ng-card">
+                                    <h3 class="text-lg font-bold border-b pb-2 mb-4" style="color: var(--ee-color); border-color: var(--border-color);">Resolution</h3>
+                                    <div class="btn-choice-group">
+                                        <label class="btn-choice-label"><input type="checkbox" id="ng-offline-resolved"> #Resolved</label>
+                                        <label class="btn-choice-label"><input type="checkbox" id="ng-offline-no-mobile"> No Mobile</label>
+                                    </div>
+                                    <input type="text" id="ng-offline-number-input" placeholder="Relevant Number (#)">
+                                    <textarea id="ng-additional-info" rows="3" placeholder="Additional notes..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Workflow: DI -->
+                            <div id="ng-workflow-di" class="ng-hidden">
+                                <div class="ng-card">
+                                    <h3 class="text-lg font-bold border-b pb-2 mb-4" style="color: var(--ee-color); border-color: var(--border-color);">DI Details</h3>
+                                    <label class="block mb-1 font-medium">Call Origin</label>
+                                    <div class="btn-choice-group">
+                                        <label class="btn-choice-label"><input type="radio" name="di-call-from-guide" value="Yes"> From Guide</label>
+                                        <label class="btn-choice-label"><input type="radio" name="di-call-from-guide" value="No"> Other</label>
+                                    </div>
+                                    <div id="ng-di-guide-details" class="ng-hidden">
+                                        <label class="block mb-1 font-medium">Albert Flow</label>
+                                        <select id="ng-di-albert-flow">
+                                            <option value="Billing">Billing</option>
+                                            <option value="Faults">Faults</option>
+                                            <option value="Orders">Orders</option>
+                                            <option value="Escalation">Escalation</option>
+                                        </select>
+                                    </div>
+                                    <label class="block mb-1 font-medium">Brand</label>
+                                    <div class="btn-choice-group">
+                                        <label class="btn-choice-label"><input type="radio" name="di-brand" value="BT"> BT</label>
+                                        <label class="btn-choice-label"><input type="radio" name="di-brand" value="EE"> EE</label>
+                                    </div>
+                                    <textarea id="ng-di-issue-summary" rows="3" placeholder="Issue Summary..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="grid grid-cols-2 gap-4 mt-6">
+                                <button type="button" id="ng-bottom-copy-btn" class="text-white py-3 rounded font-bold hover:opacity-90" style="background-color: var(--bt-color);">📋 Copy Note</button>
+                                <button type="button" id="ng-reset-form-btn" class="bg-red-50 text-red-600 border border-red-200 py-3 rounded font-bold hover:bg-red-100">🔄 Reset</button>
+                            </div>
+
+                        </form>
+                    </section>
+
+                    <!-- Right Col: Output -->
+                    <section class="sticky top-24">
+                        <div class="ng-card">
+                            <h2 class="text-xl font-bold mb-2">Generated Note</h2>
+                            <textarea id="output-note" class="w-full h-96 p-4 rounded mb-4" readonly></textarea>
+                            <button id="ng-copy-button" class="w-full text-white py-3 rounded font-bold hover:opacity-90" style="background-color: var(--ee-color);">Copy to Clipboard</button>
+                        </div>
+                    </section>
+                </div>
+                
+                <!-- Toast -->
+                <div id="ng-toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity z-50">
+                    Note copied!
+                </div>
+            </div>
+
+
+            <!-- ======================================================= -->
+            <!-- APP 3: BUG BOARD IFRAME -->
+            <!-- ======================================================= -->
+            <div id="app-bug-board" class="app-view" style="height: 100%;">
+                <iframe src="https://calumjames68.github.io/TEXTGEN4/" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+
+        </main>
+    </div>
+
+<script>
+    /* =========================================
+       HUB NAVIGATION LOGIC
+       ========================================= */
+    function switchTab(appId, navElement) {
+        // Update Nav UI
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        navElement.classList.add('active');
+
+        // Update Content UI
+        document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
+        const target = document.getElementById(appId === 'text-gen' ? 'app-text-gen' : 
+                                             appId === 'note-gen' ? 'app-note-gen' : 'app-bug-board');
+        target.classList.add('active');
+    }
+
+    /* =========================================
+       GLOBAL THEME LOGIC
+       ========================================= */
+    const toggleBtn = document.getElementById('global-theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    
+    toggleBtn.addEventListener('click', () => {
+        const isDark = document.body.getAttribute('data-theme') === 'dark';
+        document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        themeIcon.textContent = isDark ? '🌙' : '☀️';
+    });
+
+    /* =========================================
+       APP 1 LOGIC: TEXT GENERATOR
+       ========================================= */
+    (function() {
+        // --- FULL SCENARIO DATA ---
+        const scenarios = {
+            pre: [
+                { id: 'general_call', dropdownText: 'General Account Call', bt_template: `regarding your account. I'll try calling you in the next few minutes from an 0800 number.`, ee_template: `regarding your account. I'll try calling you in the next few minutes from an 0800 number.` },
+                { id: 'order_issue', dropdownText: 'Issue with Order', bt_template: `we need to discuss an issue with your recent order. I'll be calling you shortly from an 0800 number to go over the details.`, ee_template: `we need to discuss an issue with your recent order. I'll be calling you shortly from an 0800 number to go over the details.` },
+                { id: 'order_update', dropdownText: 'Order Progress Update', bt_template: `I'm calling to provide a progress update on your order. I'll try your number in the next few minutes from an 0800 number.`, ee_template: `I'm calling to provide a progress update on your order. I'll try your number in the next few minutes from an 0800 number.` },
+                { id: 'engineer_booking', dropdownText: 'Book Engineer Visit', bt_template: `I'm calling to book in your engineer appointment to get your new service installed. I'll call you in the next few minutes from an 0800 number.`, ee_template: `I'm calling to book in your engineer appointment to get your new service installed. I'll call you in the next few minutes from an 0800 number.` },
+                { id: 'engineer_reminder', dropdownText: 'Engineer Appointment Reminder', bt_template: `I'm calling with a quick reminder about your scheduled engineer visit. I'll be calling shortly from an 0800 number to confirm the details and answer any questions.`, ee_template: `I'm calling with a quick reminder about your scheduled engineer visit. I'll be calling shortly from an 0800 number to confirm the details and answer any questions.` },
+                { id: 'query_follow_up', dropdownText: 'Follow Up on a Query', bt_template: `I'm following up on your recent query. I will be calling you shortly from an 0800 number to discuss this further.`, ee_template: `I'm following up on your recent query. I will be calling you shortly from an 0800 number to discuss this further.` },
+                { id: 'complaint_follow_up', dropdownText: 'Follow Up on a Complaint', bt_template: `regarding your recent complaint. I will be calling you in the next few minutes from an 0800 number to discuss how we can resolve this for you.`, ee_template: `regarding your recent complaint. I will be calling you in the next few minutes from an 0800 number to discuss how we can resolve this for you.` }
+            ],
+            post: [
+                { id: 'ducting_issue', category: 'Delays', dropdownText: 'External Ducting Issue (12 Weeks)', delayDays: 60, bt_template: `We're sorry to let you know that there are some issues with the external ducting for your BT service, but please be assured we've already tasked our contractors with sorting it out. It's quite a complex job, so we're estimating it may take up to 12 weeks to fully resolve.\n\nHowever, we promise to keep you updated along the way and aim to provide you with an update no later than 9 PM on the {date}.\n\nYou can find a helpful booklet here: https://care.bt.com/next_steps`, ee_template: `We've hit a snag with some external ducting work for your new EE Full Fibre service. It's a tricky issue that our network partners are working to resolve. We expect this to be sorted within 12 weeks.\n\nYour next update will be scheduled for {date}. We're sorry for the delay and appreciate your patience.\n\nAs an EE customer, you can use BT/EE WIFI hotspots for free while you wait. Find out more here: https://ee-wifi.ee.co.uk/public/ee/help/index.htm` },
+                { id: 'engineer_shortage', category: 'Delays', dropdownText: 'Engineer Shortage (4 Weeks)', delayDays: 20, bt_template: `We're writing to inform you of a slight delay to your BT installation due to an unexpected regional shortage of specialist engineers. We are actively reallocating resources and expect to have an engineer with you within 4 weeks. We will provide a confirmed installation date no later than {date}. We sincerely apologize for the inconvenience this may cause.`, ee_template: `We're writing to inform you of a slight delay to your EE installation due to an unexpected regional shortage of specialist engineers. We are actively reallocating resources and expect to have an engineer with you within 4 weeks. We will provide a confirmed installation date no later than {date}. We sincerely apologize for the inconvenience this may cause.` },
+                { id: 'wayleave_delay', category: 'Delays', dropdownText: 'Wayleave/Permit Delay (8 Weeks)', delayDays: 40, bt_template: `There has been a delay in progressing your BT order as we require legal permission, known as a wayleave, to install our equipment on private land. This process can be lengthy and involves multiple parties. We are working to get this approved as quickly as possible and estimate a resolution within 8 weeks. Your next formal update will be on or before {date}. Thank you for your patience.`, ee_template: `There has been a delay in progressing your EE order as we require legal permission, known as a wayleave, to install our equipment on private land. This process can be lengthy and involves multiple parties. We are working to get this approved as quickly as possible and estimate a resolution within 8 weeks. Your next formal update will be on or before {date}. Thank you for your patience.` },
+                { id: 'damaged_cabinet', category: 'Delays', dropdownText: 'Damaged Cabinet (12 Weeks)', delayDays: 60, bt_template: `Hi there. We've identified a fault in the network, but we've already assigned an engineer to work on getting it resolved. It's a complex job, so it may take up to twelve weeks to fully fix. We'll be in touch with regular updates and will provide you with an update no later than 9 PM on {date}.\n\nPlease read this handy booklet for more detail on the work required to get you your new service: https://care.bt.com/next_steps. As a BT Customer, you can also access BT WiFi hotspots free of charge anywhere in the UK while you wait. This brilliant booklet will provide all the information you need: https://care.bt.com/_bt_wifi_hotspots`, ee_template: `Hi there. We wanted to let you know that we've identified a network fault affecting your EE service. We've already assigned an engineer to work on it. It's a complex job, so it might take up to twelve weeks to fully fix. We'll be in touch with regular updates and aim to provide you with an update no later than 9 PM on {date}.\n\nAs an EE customer, you can use BT/EE WIFI hotspots for free while you wait. Find out more here: https://ee-wifi.ee.co.uk/public/ee/help/index.htm` },
+                { id: 'damaged_pole', category: 'Delays', dropdownText: 'Damaged Pole (12 Weeks)', delayDays: 60, bt_template: `Hi there. We've found a damaged pole in our network that's affecting your property. Our civils and engineering teams are already working hard to fix it. It's a significant job, so it may take up to 12 weeks to fully resolve.\n\nWe promise to keep you updated along the way, and we'll get in touch with another update no later than 9 PM on {date}.\n\nPlease read this handy booklet for more detail on the work required to get you your new Full Fibre service: https://care.bt.com/next_steps. As a BT Customer, you can also access BT WiFi hotspots free of charge anywhere in the UK while you wait. This brilliant booklet will provide all the information you need: https://care.bt.com/_bt_wifi_hotspots`, ee_template: `Hi there. We've found a damaged pole in the network that's affecting your property. Our civils and engineering teams are already working to fix it. It's a big job, so it might take up to 12 weeks to fully resolve.\n\nWe promise to keep you updated, and we'll get in touch with another update no later than 9 PM on {date}.\n\nAs an EE customer, you can use BT/EE WIFI hotspots for free while you wait. Find out more here: https://ee-wifi.ee.co.uk/public/ee/help/index.htm` },
+                { id: 'pole_replacement', category: 'Delays', dropdownText: 'Pole Replacement (12 Weeks)', delayDays: 60, bt_template: `To complete your BT Full Fibre installation, a nearby telegraph pole needs to be replaced. This is a complex job that requires specialist teams and equipment. We estimate this work will be completed within 12 weeks. We'll be in touch with another update no later than 9 PM on {date}. We're sorry for the delay.`, ee_template: `To complete your EE Full Fibre installation, a nearby telegraph pole needs to be replaced. This is a complex job that requires specialist teams and equipment. We estimate this work will be completed within 12 weeks. We'll be in touch with another update no later than 9 PM on {date}. We're sorry for the delay.` },
+                { id: 'traffic_management', category: 'Delays', dropdownText: 'Traffic Management Delay (18 Weeks)', delayDays: 90, bt_template: `We've encountered a delay with your BT order as traffic management is required to complete the necessary work safely. This process involves local authority approvals and can take up to 18 weeks. We are working to get this scheduled as quickly as possible. Your next update will be on or before {date}. Thank you for your continued patience.`, ee_template: `We've encountered a delay with your EE order as traffic management is required to complete the necessary work safely. This process involves local authority approvals and can take up to 18 weeks. We are working to get this scheduled as quickly as possible. Your next update will be on or before {date}. Thank you for your continued patience.` },
+                { id: 'developer_delays', category: 'Delays', dropdownText: 'Developer Delays (3 Weeks)', delayDays: 15, bt_template: `Hi there. We just wanted to let you know that there's been a bit of a delay with your order, and we're really sorry for any inconvenience this might cause. It turns out that the developer of your property is experiencing some delays, but our suppliers are already working closely with them to get this issue sorted as quickly as possible. Unfortunately, it might take up to 3 weeks to fully resolve.\n\nWe'll be sure to keep you updated along the way though, and we'll get in touch with another update no later than 9 PM on {date}.`, ee_template: `Hi there. We wanted to let you know that there's been a delay with your order. It appears the developer of your property is experiencing some delays, but our suppliers are working closely with them to get this sorted. It might take up to 3 weeks to resolve.\n\nWe'll keep you updated and will get in touch with another update no later than 9 PM on {date}. We're sorry for the inconvenience.` },
+                { id: 'duct_cable_stock', category: 'Delays', dropdownText: 'Duct and Cable Stock (3 Weeks)', delayDays: 15, bt_template: `Hi there. We just wanted to give you a quick update on your fibre order. Unfortunately, there's currently a shortage of the equipment that we need to get it completed. We're really sorry for any inconvenience this may cause. Our suppliers are already on it, and they're working hard to get this issue sorted out as quickly as possible. It might take up to 3 weeks to fully resolve, but we promise to keep you updated along the way. We'll get in touch with another update no later than 9 PM on {date}.`, ee_template: `Hi there. A quick update on your fibre order: there's currently a shortage of some equipment we need. We're sorry for the inconvenience. Our suppliers are working hard to get this sorted. It might take up to 3 weeks to resolve, but we promise to keep you updated. We'll get in touch with another update no later than 9 PM on {date}.` },
+                { id: 'e_d_side_fault', category: 'Delays', dropdownText: 'E-side or D-side Fault (20 Days)', delayDays: 20, isWorkingDays: false, bt_template: `Hi there. We've got some news to share with you about our network. Unfortunately, there's a fault that we're working hard to resolve with the help of our expert engineers. It might take a little bit of time - up to 20 days, in fact - but we promise to do everything we can to get it sorted as quickly as possible. We'll be sure to keep you updated along the way, and we'll get in touch with another update by 9 PM on {date}.`, ee_template: `Hi there. We've found a fault in the network which our expert engineers are working hard to resolve. It might take up to 20 days, but we promise to get it sorted as quickly as possible. We'll keep you updated and will get in touch with another update by 9 PM on {date}.` },
+                { id: 'hoist_availability', category: 'Delays', dropdownText: 'Hoist Availability (3 Weeks)', delayDays: 15, bt_template: `Hi there. We just wanted to give you a quick update on your installation. It looks like the hoists we need to get the job done are in pretty high demand right now. Our team is working hard to source one as soon as possible, though it might take up to three weeks to get our hands on it. We'll be sure to keep you in the loop every step of the way, and we'll get in touch with another update no later than 9 PM on {date}.`, ee_template: `Hi there. A quick update on your installation: the hoists we need are in high demand right now. Our team is working hard to source one as soon as possible, though it might take up to three weeks. We'll keep you in the loop and will get in touch with another update no later than 9 PM on {date}.` },
+                { id: 'no_capacity', category: 'Delays', dropdownText: 'No Capacity Available (12 Weeks)', delayDays: 60, bt_template: `Hi there. We wanted to give you a quick update about your order. Unfortunately, there's a bit of a capacity issue in your area that's causing some delays. We're already on top of it and working closely with our suppliers to build in more capacity, so you can enjoy all the benefits of high-speed fibre. It's a bit of a big job, so it might take up to 12 weeks to complete, but we'll be sure to keep you posted every step of the way. We'll send you another update by 9 PM on {date}.`, ee_template: `Hi there. We wanted to give you an update on your order. Unfortunately, there's a capacity issue in your area causing some delays. We're working closely with our suppliers to build more capacity. It's a big job and might take up to 12 weeks to complete, but we'll keep you posted. We'll send you another update by 9 PM on {date}.` },
+                { id: 'planning_design', category: 'Delays', dropdownText: 'Planning and Design (30 Days)', delayDays: 22, bt_template: `We need to create a plan to provide your property with the new service, and this has been sent to our suppliers' specialist planning team. Unfortunately, this process can take up to 30 days to complete. We understand this is frustrating and we apologize for the inconvenience. We will be in contact by 9 pm on {date}.`, ee_template: `To provide your property with the new service, a plan needs to be created by a specialist team. This process can take up to 30 days. We know this is frustrating and we apologize. We will be in contact by 9 pm on {date}.` },
+                { id: 'ptw_delay', category: 'Delays', dropdownText: 'PTW (Permission to Work) Delay', delayDays: 20, bt_template: `Hi there. To continue with your BT Full Fibre order, our partners at Openreach require your 'Permission to Work' on your property. They have sent a letter or email with the necessary documents for you to sign. Please look out for this, as work can begin once it's returned to them. If we don't hear anything, we'll check in with you again by 9 PM on {date}. Thanks for your help!`, ee_template: `Hi there. To continue with your EE Full Fibre order, our partners at Openreach require your 'Permission to Work' on your property. They have sent a letter or email with the necessary documents for you to sign. Please look out for this, as work can begin once it's returned to them. If we don't hear anything, we'll check in with you again by 9 PM on {date}. Thanks for your help!` },
+                { id: 'open_exception', category: 'Delays', dropdownText: 'Open Exception (7 Days)', delayDays: 5, bt_template: `Hi there. We're sorry to let you know that there's been a little hiccup with your order on our supplier's systems. Don't worry though, we're already on the case and we've passed it on to their IT team to get it resolved as quickly as possible. Unfortunately, it might take up to 7 days to get everything sorted out. We'll be sure to keep you posted every step of the way, and we'll be in touch with another update by 9 PM on {date}.`, ee_template: `Hi there. We're sorry but there's been a hiccup with your order on our supplier's systems. We're on the case and have passed it to their IT team to resolve. It might take up to 7 days to sort out. We'll keep you posted and will be in touch with an update by 9 PM on {date}.` },
+                { id: 'routing_issue', category: 'Delays', dropdownText: 'Routing Issue (14 Days)', delayDays: 10, bt_template: `We've encountered an issue with the planned route assigned to your order by our suppliers. To address this, we need to consult a specialist team which may take up to 14 days to resolve. We'll keep in touch and update you on the progress by 9 PM on {date}.`, ee_template: `We've found an issue with the planned route for your order. A specialist team needs to be consulted, which may take up to 14 days to resolve. We'll keep in touch and update you on the progress by 9 PM on {date}.` },
+                { id: 'survey_required', category: 'Delays', dropdownText: 'Survey Required (30 Working Days)', delayDays: 30, isWorkingDays: true, bt_template: `We've received an update from our supplier, and it appears that we'll need to conduct a survey before we can provide you with the full fibre service. We know this might be frustrating, but please bear with us as it can take up to 30 working days to complete. We'll be sure to keep you informed and will reach out to you at the latest by 9 PM on {date}.\n\nPlease read this handy booklet for more detail: https://care.bt.com/next_steps. As a BT Customer, you can also access BT WiFi hotspots free of charge while you wait: https://care.bt.com/_bt_wifi_hotspots`, ee_template: `We've had an update from our supplier, and it looks like a survey is needed before we can complete your full fibre service. We know this is frustrating, but this can take up to 30 working days. We'll keep you informed and will contact you by 9 PM on {date} at the latest.\n\nAs an EE customer, you can use BT/EE WIFI hotspots for free while you wait. Find out more here: https://ee-wifi.ee.co.uk/public/ee/help/index.htm` },
+                { id: 'tree_cutting', category: 'Delays', dropdownText: 'Tree Cutting (13 Weeks)', delayDays: 65, bt_template: `Tree cutting is required to provide you with the fibre service. This has been sent to our supplier's civils team to get done. It can take up to 13 weeks. We will call you by 9 PM on {date}.\n\nPlease read this handy booklet for more detail: https://care.bt.com/next_steps. As a BT Customer, you can also access BT WiFi hotspots free of charge while you wait: https://care.bt.com/_bt_wifi_hotspots`, ee_template: `To provide your fibre service, some tree cutting is required. This has been sent to our supplier's civils team. It can take up to 13 weeks to complete. We will call you by 9 PM on {date}.\n\nAs an EE customer, you can use BT/EE WIFI hotspots for free while you wait. Find out more here: https://ee-wifi.ee.co.uk/public/ee/help/index.htm` },
+                { id: 'smart_hub_setup', category: 'Set Up / General', dropdownText: 'Smart Hub Set Up Guide', delayDays: 0, bt_template: `Hi there. It was great speaking with you today. I wanted to follow up and share a helpful guide on how to set up your new BT Smart Hub. This guide will walk you through everything you need to know to get started and enjoy your superfast internet services as soon as they're connected. Check it out here:\n\nhttps://www.bt.com/help/home/broadband/set-up/bt-smart-hub-how-to-set-up\n\nLet me know if you have any questions or if there's anything else I can assist you with.`, ee_template: `Hi there. It was great speaking with you today. I wanted to follow up and share a helpful guide on how to set up your new EE Smart Hub. This guide will walk you through everything you need to know to get started. Check it out here:\n\nhttps://ee.co.uk/help/broadband/getting-started/setting-up-your-smart-hub\n\nLet me know if you have any questions.`, bt_template_nocontact: `Sorry I couldn't reach you. Here is the helpful guide we discussed for setting up your new BT Smart Hub: https://www.bt.com/help/home/broadband/set-up/bt-smart-hub-how-to-set-up`, ee_template_nocontact: `Sorry I couldn't reach you. Here is the helpful guide we discussed for setting up your new EE Smart Hub: https://ee.co.uk/help/broadband/getting-started/setting-up-your-smart-hub` },
+                { id: 'mini_hub_setup', category: 'Set Up / General', dropdownText: 'Mini Hub Set Up Guide', delayDays: 0, bt_template: `Hi there. It was great speaking with you today. I'm sorry to hear about the delay in your fibre installation, but we have good news. We have placed an order for one of our 4G mini hubs for you. Once you receive it, please follow this helpful guide on how to use it. It will keep you connected while you wait for your fibre installation. Plus, it has unlimited data so you can continue using it worry-free.\n\nHere's the link to the guide: https://www.bt.com/help/mobile/4g-mini-hub`, ee_template: `Hi there. It was great speaking with you today. I'm sorry to hear about the delay in your fibre installation. We have good news: we've ordered a 4G mini hub for you. Once you receive it, this guide shows you how to use it to stay connected with unlimited data while you wait.\n\nHere's the link to the guide: https://ee.co.uk/help/mobile/get-started/smart-benefits/what-is-the-4g-mini-hub-and-how-do-i-use-it`, bt_template_nocontact: `Sorry I couldn't reach you. This is a confirmation that your 4G mini hub has been ordered to keep you connected. Here is a guide on how to use it once it arrives: https://www.bt.com/help/mobile/4g-mini-hub`, ee_template_nocontact: `Sorry I couldn't reach you. This is a confirmation that your 4G mini hub has been ordered to keep you connected. Here is a guide on how to use it once it arrives: https://ee.co.uk/help/mobile/get-started/smart-benefits/what-is-the-4g-mini-hub-and-how-do-i-use-it` },
+                { id: 'download_app', category: 'Set Up / General', dropdownText: 'Download the App Guide', delayDays: 0, bt_template: `Hi there. It was great speaking with you today. In case you weren't already aware, you can download our handy MyBT app, which allows you to easily manage your BT account. With this app, you can track orders, view your bills, and even run tests on your connection to ensure you're getting the most out of your BT services.\n\nHere's the link to download the app: https://home.bt.com/tech-gadgets/internet/manage-your-bt-account-quickly-and-easily-with-the-new-my-bt-app-11363997056591`, ee_template: `Hi there. It was great speaking with you today. You can easily manage your EE account with our handy My EE app. With the app, you can track orders, view your bills, and check your connection status.\n\nHere's the link to download the app: https://ee.co.uk/myee/app`, bt_template_nocontact: `Sorry I couldn't reach you. Just a reminder that you can manage your account, track orders and view bills using the MyBT app. Here's the link: https://home.bt.com/tech-gadgets/internet/manage-your-bt-account-quickly-and-easily-with-the-new-my-bt-app-11363997056591`, ee_template_nocontact: `Sorry I couldn't reach you. Just a reminder that you can manage your account, track orders and view bills using the My EE app. Here's the link: https://ee.co.uk/myee/app` },
+                { id: 'call_back', category: 'Set Up / General', dropdownText: 'Arrange/Book a Call Back', delayDays: 0, bt_template: `Hi there. I am really sorry for the experience you have had up to now. I want to assure you I will be calling back on `, ee_template: `Hi there. I'm sorry for the experience you've had so far. I want to assure you I will be calling you back on `, bt_template_nocontact: `Sorry I missed you. If you'd still like to speak to us, you can book a call back at a time that suits you here: https://www.bt.com/help/contact-us/callback`, ee_template_nocontact: `Sorry I missed you. If you'd still like to speak to us, you can book a call back at a time that suits you here: https://ee.co.uk/help/contact-ee/callback` },
+                { id: 'telecare_compatibility', category: 'Set Up / General', dropdownText: 'Telecare Alarm Compatibility Check', delayDays: 0, bt_template: `Hi there. Following our conversation, it's important to check that your Telecare alarm is compatible with our new Digital Voice service. Please contact your alarm provider to confirm it will work correctly once your new service is active. You can find more information from us here: https://www.bt.com/help/landline/digital-voice--how-will-my-personal-alarm-service-work-`, ee_template: `Hi there. Following our conversation, it's important to check that your Telecare alarm is compatible with our new Digital Home Phone service. Please contact your alarm provider to confirm it will work correctly once your new service is active. You can find more information from us here: https://ee.co.uk/help/landline-and-broadband/digital-home-phone`, bt_template_nocontact: `Sorry I missed you. We're getting in touch as our records show you may have a Telecare alarm. It's important to check its compatibility with our new Digital Voice service, so please contact your alarm provider to confirm it will work correctly. More info: https://www.bt.com/help/landline/digital-voice--how-will-my-personal-alarm-service-work-`, ee_template_nocontact: `Sorry I missed you. We're getting in touch as our records show you may have a Telecare alarm. It's important to check its compatibility with our new Digital Home Phone service, so please contact your alarm provider to confirm it will work correctly. More info: https://ee.co.uk/help/landline-and-broadband/digital-home-phone` },
+                { id: 'telecare_marker_added', category: 'Set Up / General', dropdownText: 'Telecare/Vulnerability Marker Added', delayDays: 0, bt_template: `Hi there. Following our conversation, I've now successfully added a Telecare/Vulnerability marker to your BT account. This helps us understand your needs better and ensures we prioritize your service, especially in the event of a fault.`, ee_template: `Hi there. Just to confirm, I've now added a Telecare/Vulnerability marker to your EE account as we discussed. This lets our teams know about your reliance on the service and helps us provide you with the priority support you need.`, bt_template_nocontact: `Sorry I couldn't reach you. This is just to confirm that, as per our earlier conversation, I have now successfully added the Telecare/Vulnerability marker to your BT account.`, ee_template_nocontact: `Sorry I couldn't reach you. This is just to confirm that, as per our earlier conversation, I have now successfully added the Telecare/Vulnerability marker to your EE account.` },
+                { id: 'great_to_speak', category: 'Set Up / General', dropdownText: 'Great to Speak to You Follow-up', delayDays: 0, bt_template: `Hi there. It was great to speak to you today, and I hope everything is sorted now for you. You can also manage your account on BT.com or using the MyBT app on your iPhone or Android mobile. To get more information about it just follow this handy link http://bt.custhelp.com/app/answers/detail/a_id/53804/~/how-to-use-the-my-bt-app`, ee_template: `Hi there. It was great to speak to you today, and I hope everything is sorted for you now. You can also manage your account on EE.co.uk or using the My EE app on your mobile. You can find more information here: https://ee.co.uk/myee/app`, bt_template_nocontact: `Sorry I missed you. I was just calling to follow up and check that everything is now sorted for you. If you need anything else, you can manage your account via the MyBT app.`, ee_template_nocontact: `Sorry I missed you. I was just calling to follow up and check that everything is now sorted for you. If you need anything else, you can manage your account via the My EE app.`}
+            ]
+        };
+        
+        const selections = { brand: 'BT', type: null, category: null, contact: null, scenarioId: null };
+        
+        // IDs
+        const container = document.getElementById('tg-appContainer');
+        const scenarioInput = document.getElementById('tg-scenarioInput');
+        const scenarioDropdown = document.getElementById('tg-scenarioDropdown');
+        const msgOutput = document.getElementById('tg-messageOutput');
+        
+        function updateUI() {
+            const { brand, type } = selections;
+            
+            container.classList.remove('theme-bt', 'theme-ee');
+            if(brand) {
+                container.classList.add(brand === 'BT' ? 'theme-bt' : 'theme-ee');
+                // Set Global Theme Variable
+                const brandColor = brand === 'BT' ? '#5514b4' : '#007b85';
+                document.documentElement.style.setProperty('--brand-active', brandColor);
+            }
+
+            // SVG Logic
+            const btLogo = container.querySelector('.logo-bt-svg');
+            const eeLogo = container.querySelector('.logo-ee-svg');
+            if(brand === 'BT') { 
+                eeLogo.style.opacity = '0.3'; eeLogo.style.filter = 'grayscale(100%)'; 
+                btLogo.style.opacity = '1'; btLogo.style.filter = 'none'; 
+            } else if(brand === 'EE') { 
+                btLogo.style.opacity = '0.3'; btLogo.style.filter = 'grayscale(100%)'; 
+                eeLogo.style.opacity = '1'; eeLogo.style.filter = 'none'; 
+            }
+
+            document.getElementById('tg-step-type').classList.toggle('tg-hidden', !brand);
+            
+            const isPost = type === 'post';
+            document.getElementById('tg-step-category').classList.toggle('tg-hidden', !isPost);
+            document.getElementById('tg-step-contact').classList.toggle('tg-hidden', !(isPost && selections.category));
+
+            const ready = (type === 'pre' && brand) || (type === 'post' && selections.contact);
+            document.getElementById('tg-step-scenario').classList.toggle('tg-hidden', !ready);
+            if(ready) populateDropdown();
+        }
+
+        function populateDropdown() {
+            if(!selections.type) return;
+            let list = scenarios[selections.type] || [];
+            let term = scenarioInput.value.toLowerCase();
+            
+            const filtered = list.filter(s => {
+                const catMatch = selections.type === 'pre' || selections.category === 'All' || s.category === selections.category;
+                return catMatch && s.dropdownText.toLowerCase().includes(term);
+            });
+
+            scenarioDropdown.innerHTML = '';
+            filtered.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'scenario-item';
+                div.textContent = s.dropdownText;
+                div.onclick = () => {
+                    scenarioInput.value = s.dropdownText;
+                    selections.scenarioId = s.id;
+                    scenarioDropdown.classList.remove('show');
+                    generateMsg();
+                };
+                scenarioDropdown.appendChild(div);
+            });
+        }
+
+        function generateMsg() {
+            if(!selections.scenarioId) return;
+            const s = scenarios[selections.type].find(x => x.id === selections.scenarioId);
+            if (!s) return; 
+            let txt = selections.brand === 'BT' ? s.bt_template : s.ee_template;
+            
+            // Date logic
+            const dateVal = document.getElementById('tg-delayStartDate').value;
+            if(s.delayDays > 0 && dateVal) {
+                 const [y, m, d] = dateVal.split('-').map(Number);
+                 const dateObj = new Date(y, m - 1, d);
+                 dateObj.setDate(dateObj.getDate() + s.delayDays);
+                 const dateStr = dateObj.toLocaleDateString('en-GB');
+                 txt = txt.replace(/{date}/g, dateStr);
+            } else if (s.delayDays > 0) {
+                 const d = new Date();
+                 d.setDate(d.getDate() + s.delayDays);
+                 const dateStr = d.toLocaleDateString('en-GB');
+                 txt = txt.replace(/{date}/g, dateStr);
+            }
+             
+             if(selections.contact === 'No') {
+                if (s.bt_template_nocontact && s.ee_template_nocontact) {
+                     txt = selections.brand === 'BT' ? s.bt_template_nocontact : s.ee_template_nocontact;
+                } else {
+                     const cleanMessage = txt.replace(/^Hi there[\.,]?\s*/i, '').replace(/^Hi[\.,]?\s*/i, '');
+                     txt = "Sorry I couldn't reach you. " + cleanMessage;
+                }
+             } else if (selections.contact === 'Yes') {
+                const originalHasGreeting = txt.toLowerCase().startsWith('hi');
+                if (originalHasGreeting) {
+                    const cleanMessage = txt.replace(/^Hi there[\.,]?\s*/i, '').replace(/^Hi[\.,]?\s*/i, '');
+                    txt = `It was great to speak to you today. ${cleanMessage}`;
+                }
+             }
+            
+            msgOutput.value = txt;
+            document.getElementById('tg-charCounter').textContent = txt.length + ' chars';
+            
+            document.getElementById('tg-delay-options').classList.toggle('tg-hidden', !(s.category === 'Delays'));
+        }
+        
+        /* --- Send to Note Logic --- */
+        document.getElementById('tg-sendToNoteButton').addEventListener('click', () => {
+            if (!selections.scenarioId) return;
+            const s = scenarios[selections.type].find(x => x.id === selections.scenarioId);
+            let noteText = `SMS Sent: ${s.dropdownText}`;
+
+            // Add date info if it's a delay scenario
+            if (s.delayDays > 0) {
+                 const dateVal = document.getElementById('tg-delayStartDate').value;
+                 // If user input a date, calculate target date, otherwise just note the delay
+                 if (dateVal) {
+                     const [y, m, d] = dateVal.split('-').map(Number);
+                     const dateObj = new Date(y, m - 1, d);
+                     dateObj.setDate(dateObj.getDate() + s.delayDays);
+                     noteText += ` (Update Due: ${dateObj.toLocaleDateString('en-GB')})`;
+                 } else {
+                     noteText += ` (${s.delayDays} day resolution)`;
+                 }
+            }
+
+            // Update Note Gen Textarea
+            const noteTextArea = document.getElementById('ng-additional-info');
+            const currentVal = noteTextArea.value;
+            noteTextArea.value = currentVal ? currentVal + '\n' + noteText : noteText;
+
+            // Trigger update in Note Gen
+            noteTextArea.dispatchEvent(new Event('input'));
+
+            // Show feedback
+            const status = document.getElementById('tg-statusMessage');
+            status.textContent = "Added to Notes!";
+            status.style.opacity = '1';
+            setTimeout(() => status.style.opacity = '0', 2000);
+        });
+
+        // Listeners
+        container.querySelectorAll('input[name="brand"]').forEach(el => el.addEventListener('change', e => { 
+            selections.brand = e.target.value; 
+            updateUI(); 
+            if (selections.scenarioId) generateMsg(); 
+        }));
+        
+        container.querySelectorAll('input[name="type"]').forEach(el => el.addEventListener('change', e => { 
+            selections.type = e.target.value; 
+            selections.scenarioId = null; // Clear old scenario
+            msgOutput.value = ''; 
+            scenarioInput.value = ''; 
+            updateUI(); 
+        }));
+        
+        container.querySelectorAll('input[name="category"]').forEach(el => el.addEventListener('change', e => { 
+            selections.category = e.target.value; 
+            updateUI(); 
+            if(scenarioDropdown.classList.contains('show')) populateDropdown();
+        }));
+        
+        container.querySelectorAll('input[name="contactStatus"]').forEach(el => el.addEventListener('change', e => { 
+            selections.contact = e.target.value; 
+            updateUI(); 
+            if (selections.scenarioId) generateMsg(); 
+        }));
+        
+        document.getElementById('tg-delayStartDate').addEventListener('change', () => {
+             if (selections.scenarioId) generateMsg();
+        });
+        
+        const cbTime = document.getElementById('tg-callbackTime');
+        for(let i=8; i<=20; i++) {
+            for(let m=0; m<60; m+=15) {
+                const opt = document.createElement('option');
+                const timeStr = `${i.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+                opt.value = timeStr; opt.text = timeStr;
+                cbTime.appendChild(opt);
+            }
+        }
+
+        document.getElementById('tg-insertDateTime').addEventListener('click', () => {
+            const date = document.getElementById('tg-callbackDate').value;
+            const time = document.getElementById('tg-callbackTime').value;
+            if(date && time) {
+                 const d = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+                 msgOutput.value += ` I will call you back on ${d} at ${time}.`;
+            }
+        });
+
+        scenarioInput.addEventListener('focus', () => { populateDropdown(); scenarioDropdown.classList.add('show'); });
+        scenarioInput.addEventListener('input', () => { populateDropdown(); scenarioDropdown.classList.add('show'); });
+        
+        document.addEventListener('click', e => {
+            if(!scenarioInput.contains(e.target) && !scenarioDropdown.contains(e.target)) scenarioDropdown.classList.remove('show');
+        });
+
+        document.getElementById('tg-copyButton').addEventListener('click', () => {
+            msgOutput.select();
+            document.execCommand('copy');
+            const status = document.getElementById('tg-statusMessage');
+            status.textContent = "Message copied!";
+            status.style.opacity = '1';
+            setTimeout(() => status.style.opacity = '0', 2000);
+        });
+
+        document.getElementById('tg-resetButton').addEventListener('click', () => {
+             selections.brand = 'BT'; selections.type = null; selections.category = null; selections.contact = null; selections.scenarioId = null;
+             container.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+             document.getElementById('brandBT').checked = true;
+             scenarioInput.value = ''; msgOutput.value = '';
+             updateUI();
+        });
+        
+        updateUI();
+    })();
+
+    /* =========================================
+       APP 2 LOGIC: NOTE GENERATOR
+       ========================================= */
+    (function() {
+        // --- FULL DELAY REASONS & ERROR CODES ---
+        const delayReasons = [
+             { id: 'ducting_issue', text: 'External Ducting Issue (12 Weeks)'},
+             { id: 'engineer_shortage', text: 'Engineer Shortage (4 Weeks)'},
+             { id: 'wayleave_delay', text: 'Wayleave/Permit Delay (8 Weeks)'},
+             { id: 'damaged_cabinet', text: 'Damaged Cabinet (12 Weeks)'},
+             { id: 'damaged_pole', text: 'Damaged Pole (12 Weeks)'},
+             { id: 'pole_replacement', text: 'Pole Replacement (12 Weeks)'},
+             { id: 'traffic_management', text: 'Traffic Management Delay (18 Weeks)'},
+             { id: 'developer_delays', text: 'Developer Delays (3 Weeks)'},
+             { id: 'duct_cable_stock', text: 'Duct and Cable Stock (3 Weeks)'},
+             { id: 'e_d_side_fault', text: 'E-side or D-side Fault (20 Days)'},
+             { id: 'hoist_availability', text: 'Hoist Availability (3 Weeks)'},
+             { id: 'no_capacity', text: 'No Capacity Available (12 Weeks)'},
+             { id: 'planning_design', text: 'Planning and Design (30 Days)'},
+             { id: 'ptw_delay', text: 'PTW (Permission to Work) Delay'},
+             { id: 'open_exception', text: 'Open Exception (7 Days)'},
+             { id: 'routing_issue', text: 'Routing Issue (14 Days)'},
+             { id: 'survey_required', text: 'Survey Required (30 Days)'},
+             { id: 'tree_cutting', text: 'Tree Cutting (13 Weeks)'},
+        ];
+
+        const errorCodes = [
+            { code: '521', description: "Changes to appointment" },
+            { code: '523', description: "New appointment required" },
+            { code: '524', description: "New appointment required" },
+            { code: '525', description: "Changes to appointment" },
+            { code: '566', description: "New appointment required" },
+            { code: '584', description: "Further work required" },
+            { code: '585', description: "Further work required" },
+            { code: '586', description: "Survey" },
+            { code: '2001', description: "Contact details supplied don't match database" },
+            { code: '5045', description: "Changes to appointment" },
+            { code: '5197', description: "New appointment required" },
+            { code: '5466', description: "Planning and design" },
+            { code: '5472', description: "New appointment required" },
+            { code: '5742', description: "Survey" },
+            { code: '5789', description: "Changes to appointment" },
+            { code: '9652-2', description: "Planning and design" },
+            { code: '9652-4', description: "Planning and design" },
+            { code: '9662', description: "Delayed in Planning" },
+            { code: '9775-1', description: "Further work required" },
+            { code: '9798', description: "Engineer unable to complete work" },
+            { code: '9881', description: "Engineer unable to complete work" },
+            { code: '100221', description: "Haven't sent a new appointment within 15 days of request" },
+            { code: '100313', description: "No asset for given ALID" },
+            { code: '101002', description: "Planning and design" },
+            { code: '101003', description: "Awaiting D share routing" },
+            { code: '101018', description: "PSTN delay" },
+            { code: '101021', description: "Delayed in Planning" },
+            { code: '101031', description: "Openreach querying whether to proceed with the order" },
+            { code: '101074', description: "Further work required" },
+            { code: '101075', description: "Openreach is waiting for information from the CP" },
+            { code: '101078', description: "Network build status update" },
+            { code: '101082', description: "Line plant delay" },
+            { code: '101084', description: "Issues with the underground network" },
+            { code: '101092', description: "Required work exceeded the time allocation" },
+            { code: '101093', description: "Further work is needed by Openreach" },
+            { code: '101095', description: "Fault on the distribution side network" },
+            { code: '101107', description: "Survey" },
+            { code: '101110', description: "Safety-related hazard" },
+            { code: '101115', description: "Planning and design" },
+            { code: '101116', description: "Planning and design" },
+            { code: '101130', description: "New appointment required" },
+            { code: '101131', description: "New appointment required" },
+            { code: '101132', description: "Additional build works impacting order" },
+            { code: '101133', description: "Additional Traffic Management Act (TMA) impact" },
+            { code: '101134', description: "Order on waiters list due to network capacity issues" },
+            { code: '101146', description: "End Customer provided instructions different to those from the CP" },
+            { code: '101147', description: "Engineer missed the slot or was unable to complete installation" },
+            { code: '101148', description: "Engineer missed the slot or was unable to complete installation" },
+            { code: '1D1153', description: "Engineer missed the slot or was unable to complete installation" },
+            { code: '101158', description: "Appointment missed due to an End Customer missed scenario" },
+            { code: '101160', description: "Order passed to Network Addressing Team (NAT)" },
+            { code: '101161', description: "Order requires a survey" },
+            { code: '101163', description: "Delayed in Planning" },
+            { code: '101165', description: "The original routing is unavailable" },
+            { code: '101166', description: "Planning and design" },
+            { code: '101171', description: "Appointment missed due to an End Customer missed scenario" },
+            { code: 'Call me link', description: "Customer used the call me link" },
+            { code: 'Guide Booked Callback', description: "Guide booked a callback for customer" },
+            { code: 'No Code', description: "No specific error code provided" }
+        ];
+
+        const form = document.getElementById('ng-note-form');
+        const output = document.getElementById('output-note');
+        const historyList = document.getElementById('ng-history-list');
+        const toast = document.getElementById('ng-toast');
+        
+        // History
+        document.getElementById('ng-toggle-history').addEventListener('click', () => document.getElementById('note-history-sidebar').classList.add('open'));
+        document.getElementById('ng-close-history').addEventListener('click', () => document.getElementById('note-history-sidebar').classList.remove('open'));
+        
+        function addToHistory(txt) {
+            const div = document.createElement('div');
+            div.className = 'text-sm p-2 border rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700';
+            div.textContent = txt.substring(0, 40) + '...';
+            div.onclick = () => { output.value = txt; };
+            historyList.prepend(div);
+        }
+
+        // Logic
+        const businessRadios = document.querySelectorAll('input[name="business-area"]');
+        const offlineSec = document.getElementById('ng-workflow-offline');
+        const diSec = document.getElementById('ng-workflow-di');
+
+        businessRadios.forEach(r => r.addEventListener('change', e => {
+            offlineSec.classList.toggle('ng-hidden', e.target.value !== 'Offline');
+            diSec.classList.toggle('ng-hidden', e.target.value !== 'DI');
+        }));
+
+        document.querySelectorAll('input[name="di-call-from-guide"]').forEach(r => {
+            r.addEventListener('change', e => {
+                const details = document.getElementById('ng-di-guide-details');
+                if(details) details.classList.toggle('ng-hidden', e.target.value !== 'Yes');
+            });
+        });
+
+        // Populate Delays
+        const delaySelect = document.getElementById('ng-delay-reason');
+        delayReasons.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.text; opt.textContent = d.text;
+            delaySelect.appendChild(opt);
+        });
+
+        // Error Code Search Logic
+        const errorInput = document.getElementById('ng-delay-error-code');
+        const errorResults = document.getElementById('ng-error-search-results');
+
+        errorInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            errorResults.innerHTML = '';
+            
+            if(term.length < 1) {
+                errorResults.classList.add('ng-hidden');
+                return;
+            }
+
+            const matches = errorCodes.filter(ec => 
+                ec.code.toLowerCase().includes(term) || ec.description.toLowerCase().includes(term)
+            );
+
+            if(matches.length > 0) {
+                errorResults.classList.remove('ng-hidden');
+                matches.forEach(match => {
+                    const div = document.createElement('div');
+                    div.className = 'search-result-item';
+                    div.innerHTML = `<strong>${match.code}</strong> - ${match.description}`;
+                    div.onclick = () => {
+                        errorInput.value = match.code;
+                        errorResults.classList.add('ng-hidden');
+                        generate();
+                    };
+                    errorResults.appendChild(div);
+                });
+            } else {
+                errorResults.classList.add('ng-hidden');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!errorInput.contains(e.target) && !errorResults.contains(e.target)) {
+                errorResults.classList.add('ng-hidden');
+            }
+        });
+        
+        // --- FIXES ---
+        const container = document.querySelector('#app-note-gen');
+        
+        container.querySelectorAll('input[name="customer-answered"]').forEach(r => {
+            r.addEventListener('change', e => {
+                const isNo = e.target.value === 'No';
+                document.getElementById('ng-verified-group').classList.toggle('ng-hidden', isNo);
+                if(isNo) {
+                    container.querySelectorAll('input[name="customer-verified"]').forEach(v => v.checked = false);
+                }
+                generate(); 
+            });
+        });
+
+        const resolvedChk = document.getElementById('ng-offline-resolved');
+        const noMobileChk = document.getElementById('ng-offline-no-mobile');
+        
+        resolvedChk.addEventListener('change', e => {
+            if(e.target.checked) noMobileChk.checked = false;
+            generate();
+        });
+        
+        noMobileChk.addEventListener('change', e => {
+            if(e.target.checked) resolvedChk.checked = false;
+            generate();
+        });
+        
+        function generate() {
+            const fd = new FormData(form);
+            let note = `Business Area: ${fd.get('business-area')}\n`;
+            note += `Time: ${new Date().toLocaleString()}\n`;
+            
+            if(fd.get('business-area') === 'Offline') {
+                note += `--- OFFLINE ---\n`;
+                note += `Error Code: ${document.getElementById('ng-delay-error-code').value || 'N/A'}\n`;
+                note += `Reason: ${document.getElementById('ng-delay-reason').value || 'N/A'}\n`;
+                note += `Cust Answered: ${fd.get('customer-answered') || 'N/A'}\n`;
+                
+                if(fd.get('customer-answered') === 'Yes') {
+                     note += `Verified: ${fd.get('customer-verified') || 'N/A'}\n`;
+                }
+                
+                note += `Pre-Text: ${fd.get('pre-text-sent') || 'N/A'} | Post-Text: ${fd.get('post-text-sent') || 'N/A'}\n`;
+                
+                if(document.getElementById('ng-offline-resolved').checked) note += `#Resolved `;
+                if(document.getElementById('ng-offline-no-mobile').checked) note += `#NoMobile `;
+                const num = document.getElementById('ng-offline-number-input').value;
+                if(num) note += `#${num}`;
+                note += `\n`;
+
+            } else {
+                note += `--- DI ---\n`;
+                note += `Call Origin: ${fd.get('di-call-from-guide')}\n`;
+                if(fd.get('di-call-from-guide') === 'Yes') {
+                     note += `Flow: ${document.getElementById('ng-di-albert-flow').value}\n`;
+                }
+                note += `Brand: ${fd.get('di-brand') || 'N/A'}\n`;
+                const issue = document.getElementById('ng-di-issue-summary').value;
+                if(issue) note += `Issue: ${issue}\n`;
+            }
+            
+            const addInfo = document.getElementById('ng-additional-info').value;
+            if(addInfo) note += `\nNotes:\n${addInfo}`;
+
+            output.value = note;
+        }
+        
+        // --- Auto Save Logic ---
+        function saveAutoSave() {
+            const formState = {};
+            Array.from(form.elements).forEach(el => {
+                if (el.name || el.id) {
+                    const key = el.name || el.id;
+                    if (el.type === 'radio') {
+                        if (el.checked) formState[key] = el.value;
+                    } else if (el.type === 'checkbox') {
+                        formState[key] = el.checked;
+                    } else {
+                        formState[key] = el.value;
+                    }
+                }
+            });
+            localStorage.setItem('ng_autosave', JSON.stringify(formState));
+        }
+
+        function loadAutoSave() {
+            const saved = JSON.parse(localStorage.getItem('ng_autosave'));
+            if (!saved) return;
+            
+            Object.keys(saved).forEach(key => {
+                const val = saved[key];
+                // Try Name (Radios)
+                const radios = document.querySelectorAll(`input[name="${key}"]`);
+                if (radios.length > 0) {
+                    radios.forEach(r => {
+                        if (r.value === val) {
+                             r.checked = true;
+                             r.dispatchEvent(new Event('change')); // Trigger logic
+                        }
+                    });
+                } else {
+                    // Try ID
+                    const el = document.getElementById(key);
+                    if (el) {
+                        if (el.type === 'checkbox') {
+                            el.checked = val;
+                            el.dispatchEvent(new Event('change'));
+                        } else {
+                            el.value = val;
+                            el.dispatchEvent(new Event('input'));
+                        }
+                    }
+                }
+            });
+        }
+
+        form.addEventListener('input', () => { generate(); saveAutoSave(); });
+        form.addEventListener('change', () => { generate(); saveAutoSave(); });
+
+        document.getElementById('ng-copy-button').addEventListener('click', () => {
+            output.select(); document.execCommand('copy');
+            addToHistory(output.value);
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 2000);
+        });
+        
+        document.getElementById('ng-bottom-copy-btn').addEventListener('click', () => document.getElementById('ng-copy-button').click());
+        
+        document.getElementById('ng-reset-form-btn').addEventListener('click', () => {
+            form.reset();
+            generate();
+            saveAutoSave(); // Clear autosave effectively
+        });
+        
+        // Init
+        loadAutoSave();
+        generate(); 
+    })();
+
+</script>
+</body>
+</html>
