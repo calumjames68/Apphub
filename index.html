@@ -341,7 +341,7 @@
         
         #app-note-gen #output-note {
             background-color: #111827; color: #d1d5db; font-family: 'Roboto Mono', monospace;
-            border: 1px solid var(--border-color); line-height: 1.6; min-height: 250px;
+            border: 1px solid var(--border-color); line-height: 1.6; min-height: 600px; /* Increased height */
         }
         
         /* History Sidebar - FIXED POSITIONING FIX */
@@ -417,7 +417,7 @@
                     <div id="tg-step-brand" class="mb-6">
                         <label class="block text-sm font-bold mb-2">1. Select Brand</label>
                         <div class="flex gap-2 flex-wrap">
-                            <input type="radio" id="brandBT" name="brand" value="BT" checked>
+                            <input type="radio" id="brandBT" name="brand" value="BT">
                             <label for="brandBT" class="tg-radio-label">BT</label>
                             
                             <input type="radio" id="brandEE" name="brand" value="EE">
@@ -426,7 +426,7 @@
                     </div>
 
                     <!-- Step 2: Type -->
-                    <div id="tg-step-type" class="mb-6">
+                    <div id="tg-step-type" class="mb-6 tg-hidden">
                         <label class="block text-sm font-bold mb-2">2. Message Type</label>
                         <div class="flex gap-2 flex-wrap">
                             <input type="radio" id="typePre" name="type" value="pre">
@@ -751,7 +751,8 @@
             ]
         };
         
-        const selections = { brand: 'BT', type: null, category: null, contact: null, scenarioId: null };
+        // Initialize with NO selection
+        const selections = { brand: null, type: null, category: null, contact: null, scenarioId: null };
         
         // IDs
         const container = document.getElementById('tg-appContainer');
@@ -765,15 +766,18 @@
             container.classList.remove('theme-bt', 'theme-ee');
             if(brand) {
                 container.classList.add(brand === 'BT' ? 'theme-bt' : 'theme-ee');
-                // Set Global Theme Variable
                 const brandColor = brand === 'BT' ? '#5514b4' : '#007b85';
                 document.documentElement.style.setProperty('--brand-active', brandColor);
             }
 
-            // SVG Logic
             const btLogo = container.querySelector('.logo-bt-svg');
             const eeLogo = container.querySelector('.logo-ee-svg');
-            if(brand === 'BT') { 
+            
+            if (!brand) {
+                // Default state
+                btLogo.style.opacity = '0.5'; btLogo.style.filter = 'grayscale(100%)';
+                eeLogo.style.opacity = '0.5'; eeLogo.style.filter = 'grayscale(100%)';
+            } else if(brand === 'BT') { 
                 eeLogo.style.opacity = '0.3'; eeLogo.style.filter = 'grayscale(100%)'; 
                 btLogo.style.opacity = '1'; btLogo.style.filter = 'none'; 
             } else if(brand === 'EE') { 
@@ -823,7 +827,6 @@
             if (!s) return; 
             let txt = selections.brand === 'BT' ? s.bt_template : s.ee_template;
             
-            // Date logic
             const dateVal = document.getElementById('tg-delayStartDate').value;
             if(s.delayDays > 0 && dateVal) {
                  const [y, m, d] = dateVal.split('-').map(Number);
@@ -961,9 +964,12 @@
         });
 
         document.getElementById('tg-resetButton').addEventListener('click', () => {
-             selections.brand = 'BT'; selections.type = null; selections.category = null; selections.contact = null; selections.scenarioId = null;
+             selections.brand = null; selections.type = null; selections.category = null; selections.contact = null; selections.scenarioId = null;
              container.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
-             document.getElementById('brandBT').checked = true;
+             // Ensure visually no radio is checked initially after reset
+             const inputs = container.querySelectorAll('input[type="radio"]');
+             for(let i=0; i<inputs.length; i++) { inputs[i].checked = false; }
+             
              scenarioInput.value = ''; msgOutput.value = '';
              updateUI();
         });
@@ -1180,12 +1186,16 @@
         const noMobileChk = document.getElementById('ng-offline-no-mobile');
         
         resolvedChk.addEventListener('change', e => {
-            if(e.target.checked) noMobileChk.checked = false;
+            if(e.target.checked) {
+                noMobileChk.checked = false;
+            }
             generate();
         });
         
         noMobileChk.addEventListener('change', e => {
-            if(e.target.checked) resolvedChk.checked = false;
+            if(e.target.checked) {
+                resolvedChk.checked = false;
+            }
             generate();
         });
         
