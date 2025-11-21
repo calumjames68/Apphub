@@ -709,11 +709,22 @@
        ========================================= */
     const toggleBtn = document.getElementById('global-theme-toggle');
     const themeIcon = document.getElementById('theme-icon');
-    
+
+    // 1. Initialize from Local Storage
+    const savedTheme = localStorage.getItem('hub_theme') || 'light';
+    document.body.setAttribute('data-theme', savedTheme);
+    // Icon logic: If dark, show sun (to switch to light). If light, show moon.
+    themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+
+    // 2. Toggle & Save
     toggleBtn.addEventListener('click', () => {
-        const isDark = document.body.getAttribute('data-theme') === 'dark';
-        document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-        themeIcon.textContent = isDark ? '🌙' : '☀️';
+        const currentTheme = document.body.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.body.setAttribute('data-theme', newTheme);
+        themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        
+        localStorage.setItem('hub_theme', newTheme);
     });
 
     /* =========================================
