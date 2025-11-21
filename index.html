@@ -18,7 +18,7 @@
         :root {
             --bt-color: #5514b4;
             --ee-color: #007b85;
-            --brand-active: var(--bt-color); /* Default to BT */
+            --brand-active: #6b7280; /* Default to gray until selected */
             
             /* Light Mode Defaults */
             --bg-body: #f3f4f6;
@@ -366,6 +366,63 @@
         #note-history-sidebar .text-sm {
             padding: 0.75rem; margin-bottom: 0.5rem; border-color: var(--border-color);
         }
+        
+        /* =========================================
+           APP 4: UTILITIES STYLES
+           ========================================= */
+        #app-utilities {
+            padding: 40px;
+        }
+        .util-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .util-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border-color: var(--ee-color);
+        }
+        .util-card h3 {
+            color: var(--text-main);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        .util-card p {
+            color: var(--text-sub);
+            font-size: 0.875rem;
+        }
+        .util-icon {
+            background-color: var(--input-bg);
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            color: var(--bt-color);
+            border: 1px solid var(--border-color);
+        }
+        .util-section-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-sub);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .util-hidden { display: none !important; }
 
     </style>
 </head>
@@ -383,6 +440,10 @@
                 <div class="nav-item" onclick="switchTab('note-gen', this)">
                     <div class="nav-icon">📝</div>
                     <div class="nav-label">Note Gen</div>
+                </div>
+                <div class="nav-item" onclick="switchTab('utilities', this)">
+                    <div class="nav-icon">🛠️</div>
+                    <div class="nav-label">Utilities</div>
                 </div>
                 <div class="nav-item" onclick="switchTab('bug-board', this)">
                     <div class="nav-icon">🐛</div>
@@ -411,13 +472,15 @@
                     <div class="flex justify-between items-center mb-8 border-b pb-5 border-gray-200" style="border-color: var(--border-color);">
                         <h1 class="text-2xl font-bold" style="color: var(--text-main);">Text Generator</h1>
                         <div class="flex gap-4 items-center">
-                            <!-- SVG Logos -->
-                            <svg class="h-8 w-auto transition-all duration-300 logo-bt-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="#5514b4">
+                            <!-- Original BT Logo -->
+                            <svg class="h-12 w-auto transition-all duration-300 logo-bt-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="#5514b4">
                                 <circle cx="50" cy="50" r="48" stroke="#5514b4" stroke-width="4" fill="none"/>
-                                <text x="50" y="68" font-family="Arial" font-size="50" font-weight="bold" text-anchor="middle" fill="#5514b4">BT</text>
+                                <text x="50" y="68" font-family="Arial, Helvetica, sans-serif" font-size="50" font-weight="bold" text-anchor="middle" fill="#5514b4">BT</text>
                             </svg>
-                            <svg class="h-8 w-auto transition-all duration-300 logo-ee-svg" viewBox="0 0 80 40" xmlns="http://www.w3.org/2000/svg" fill="#007b85">
-                                <text x="0" y="32" font-family="Arial" font-size="40" font-weight="bold" fill="#007b85">EE</text>
+                            
+                            <!-- Original EE Logo -->
+                            <svg class="h-10 w-auto transition-all duration-300 logo-ee-svg" viewBox="0 0 80 40" xmlns="http://www.w3.org/2000/svg" fill="#007b85">
+                                <text x="0" y="32" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="bold" fill="#007b85">EE</text>
                             </svg>
                         </div>
                     </div>
@@ -676,6 +739,42 @@
                     Note copied!
                 </div>
             </div>
+            
+            
+            <!-- ======================================================= -->
+            <!-- APP 4: UTILITIES (LINKS DASHBOARD) -->
+            <!-- ======================================================= -->
+            <div id="app-utilities" class="app-view">
+                <div class="tg-container" style="max-width: 1200px;">
+                    <div class="flex justify-between items-center mb-8 border-b pb-5 border-gray-200" style="border-color: var(--border-color);">
+                        <div>
+                             <h1 class="text-2xl font-bold" style="color: var(--text-main);">Utilities & Links</h1>
+                             <p style="color: var(--text-sub);">Quick access to essential systems.</p>
+                        </div>
+                        <input type="text" id="util-search" placeholder="🔍 Search links..." 
+                               class="p-3 rounded border w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                               style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-main);">
+                    </div>
+
+                    <!-- Core Systems -->
+                    <div class="util-section-title">Core Systems</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="util-grid-core">
+                        <!-- Links injected by JS -->
+                    </div>
+
+                    <!-- DI Tools -->
+                    <div class="util-section-title">DI Tools</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="util-grid-di">
+                        <!-- Links injected by JS -->
+                    </div>
+
+                    <!-- HR & Admin -->
+                    <div class="util-section-title">HR & Admin</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="util-grid-hr">
+                        <!-- Links injected by JS -->
+                    </div>
+                </div>
+            </div>
 
 
             <!-- ======================================================= -->
@@ -699,8 +798,7 @@
 
         // Update Content UI
         document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
-        const target = document.getElementById(appId === 'text-gen' ? 'app-text-gen' : 
-                                             appId === 'note-gen' ? 'app-note-gen' : 'app-bug-board');
+        const target = document.getElementById('app-' + appId);
         target.classList.add('active');
     }
 
@@ -709,23 +807,22 @@
        ========================================= */
     const toggleBtn = document.getElementById('global-theme-toggle');
     const themeIcon = document.getElementById('theme-icon');
-
-    // 1. Initialize from Local Storage
-    const savedTheme = localStorage.getItem('hub_theme') || 'light';
-    document.body.setAttribute('data-theme', savedTheme);
-    // Icon logic: If dark, show sun (to switch to light). If light, show moon.
-    themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-
-    // 2. Toggle & Save
+    
     toggleBtn.addEventListener('click', () => {
-        const currentTheme = document.body.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        const isDark = document.body.getAttribute('data-theme') === 'dark';
+        document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        themeIcon.textContent = isDark ? '🌙' : '☀️';
         
-        document.body.setAttribute('data-theme', newTheme);
-        themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-        
-        localStorage.setItem('hub_theme', newTheme);
+        // Save preference
+        localStorage.setItem('hub_theme', isDark ? 'light' : 'dark');
     });
+    
+    // Load preference
+    const savedTheme = localStorage.getItem('hub_theme');
+    if(savedTheme) {
+        document.body.setAttribute('data-theme', savedTheme);
+        themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+    }
 
     /* =========================================
        APP 1 LOGIC: TEXT GENERATOR
@@ -976,11 +1073,16 @@
 
         document.getElementById('tg-copyButton').addEventListener('click', () => {
             msgOutput.select();
-            document.execCommand('copy');
-            const status = document.getElementById('tg-statusMessage');
-            status.textContent = "Message copied!";
-            status.style.opacity = '1';
-            setTimeout(() => status.style.opacity = '0', 2000);
+            // Legacy copy method (execCommand) is safest for this env
+            try {
+                document.execCommand('copy');
+                const status = document.getElementById('tg-statusMessage');
+                status.textContent = "Message copied!";
+                status.style.opacity = '1';
+                setTimeout(() => status.style.opacity = '0', 2000);
+            } catch (err) {
+                console.error('Copy failed', err);
+            }
         });
 
         document.getElementById('tg-resetButton').addEventListener('click', () => {
@@ -996,421 +1098,70 @@
         // Initial UI Update
         updateUI();
     })();
-
+    
     /* =========================================
-       APP 2 LOGIC: NOTE GENERATOR
+       APP 4: UTILITIES LOGIC (LINKS)
        ========================================= */
-    // Define helper functions globally so they can be used by Text Gen
-    let saveAutoSave; 
-
     (function() {
-        // --- FULL DELAY REASONS & ERROR CODES ---
-        const delayReasons = [
-             { id: 'ducting_issue', text: 'External Ducting Issue (12 Weeks)'},
-             { id: 'engineer_shortage', text: 'Engineer Shortage (4 Weeks)'},
-             { id: 'wayleave_delay', text: 'Wayleave/Permit Delay (8 Weeks)'},
-             { id: 'damaged_cabinet', text: 'Damaged Cabinet (12 Weeks)'},
-             { id: 'damaged_pole', text: 'Damaged Pole (12 Weeks)'},
-             { id: 'pole_replacement', text: 'Pole Replacement (12 Weeks)'},
-             { id: 'traffic_management', text: 'Traffic Management Delay (18 Weeks)'},
-             { id: 'developer_delays', text: 'Developer Delays (3 Weeks)'},
-             { id: 'duct_cable_stock', text: 'Duct and Cable Stock (3 Weeks)'},
-             { id: 'e_d_side_fault', text: 'E-side or D-side Fault (20 Days)'},
-             { id: 'hoist_availability', text: 'Hoist Availability (3 Weeks)'},
-             { id: 'no_capacity', text: 'No Capacity Available (12 Weeks)'},
-             { id: 'planning_design', text: 'Planning and Design (30 Days)'},
-             { id: 'ptw_delay', text: 'PTW (Permission to Work) Delay'},
-             { id: 'open_exception', text: 'Open Exception (7 Days)'},
-             { id: 'routing_issue', text: 'Routing Issue (14 Days)'},
-             { id: 'survey_required', text: 'Survey Required (30 Days)'},
-             { id: 'tree_cutting', text: 'Tree Cutting (13 Weeks)'},
-        ];
+        const links = {
+            core: [
+                { title: "Hub / Albert", desc: "Customer Management", icon: "👥", url: "https://hub.intra.bt.com/" },
+                { title: "Offline Consumer", desc: "", icon: "📉", url: "https://live.advisor.nat.bt.com/s/apps/appsadvisorframework/svi.html#/?launcherId=needs_generated&IvrNum=NOIVRNUM&ein=617093136&MediaType=external_none&omniContextId=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0dHFlNnBhd2V1NWpldnZyZ3V6anNxM3dwMzdwYnV6dCIsImV4cCI6MTcxNDQ1MDYzOSwiYXVkIjoiY3R4YXBwIiwiaXNzIjoiY3R4c3ZjIiwianRpIjoiYzdmYjFlMDQtYjlmOC00YjM2LThhMGEtNjM1MmMwYzkxNjg1Iiwicm9sIjpbIlJFQURFUiIsIldSSVRFUiJdLCJyZCI6WyJpZHYuKiIsIm9yZGVyLioiLCJjYWxsZXIuKiIsImN1c3RvbWVyLioiLCJ1c2VyLioiXSwid3IiOlsiaWR2LioiLCJvcmRlci4qIiwiY3VzdG9tZXIuKiIsInVzZXIuKiJdLCJ0dGwiOjB9.1OHz4ik4I-JA-p968NPL5yjSVZY3DEfDeTAj2Uw-qks&launchScenario=lowLevelViolations&appVariant=desktop&launcher=advisorhub" },
+                { title: "Openreach Portal", desc: "Dashboard", icon: "🔧", url: "https://www.openreach.co.uk/cpportal/dashboard" }
+            ],
+            di_tools: [
+                { title: "One View", desc: "Customer Records", icon: "👁️", url: "https://oneviewaz.nat.bt.com/azure_consumer_enu/start.swe?SWECmd=GotoView&SWEView=CUT+Home+Page+View+(CME)&SWERF=1&SWEHo=oneviewaz.nat.bt.com&SWEBU=1&SWEApplet0=Layout+Controls+Applet&SWERowId0=VRId-0" }
+            ],
+            hr: [
+                { title: "HR / Payslips", desc: "SuccessFactors", icon: "💰", url: "https://performancemanager.successfactors.eu/sf/start?_s.crb=SbivFAVf2AUpxcIdG7Dfghk0QITA5TUL1IZVQavcrHQ%253d" },
+                { title: "My Schedule", desc: "IEX / WFM", icon: "📅", url: "https://iex-cust1.bt.com/wfm/webstation/my-schedule" },
+                { title: "Flex Balance", desc: "PowerApps Flex Tool", icon: "⚖️", url: "https://apps.powerapps.com/play/e/default-a7f35688-9c00-4d5e-ba41-29f146377ab0/a/34ed221f-d979-4ec4-a7a3-6496d62082c1?tenantId=a7f35688-9c00-4d5e-ba41-29f146377ab0&sourcetime=1728311398639" }
+            ]
+        };
 
-        const errorCodes = [
-            { code: '521', description: "Changes to appointment" },
-            { code: '523', description: "New appointment required" },
-            { code: '524', description: "New appointment required" },
-            { code: '525', description: "Changes to appointment" },
-            { code: '566', description: "New appointment required" },
-            { code: '584', description: "Further work required" },
-            { code: '585', description: "Further work required" },
-            { code: '586', description: "Survey" },
-            { code: '2001', description: "Contact details supplied don't match database" },
-            { code: '5045', description: "Changes to appointment" },
-            { code: '5197', description: "New appointment required" },
-            { code: '5466', description: "Planning and design" },
-            { code: '5472', description: "New appointment required" },
-            { code: '5742', description: "Survey" },
-            { code: '5789', description: "Changes to appointment" },
-            { code: '9652-2', description: "Planning and design" },
-            { code: '9652-4', description: "Planning and design" },
-            { code: '9662', description: "Delayed in Planning" },
-            { code: '9775-1', description: "Further work required" },
-            { code: '9798', description: "Engineer unable to complete work" },
-            { code: '9881', description: "Engineer unable to complete work" },
-            { code: '100221', description: "Haven't sent a new appointment within 15 days of request" },
-            { code: '100313', description: "No asset for given ALID" },
-            { code: '101002', description: "Planning and design" },
-            { code: '101003', description: "Awaiting D share routing" },
-            { code: '101018', description: "PSTN delay" },
-            { code: '101021', description: "Delayed in Planning" },
-            { code: '101031', description: "Openreach querying whether to proceed with the order" },
-            { code: '101074', description: "Further work required" },
-            { code: '101075', description: "Openreach is waiting for information from the CP" },
-            { code: '101078', description: "Network build status update" },
-            { code: '101082', description: "Line plant delay" },
-            { code: '101084', description: "Issues with the underground network" },
-            { code: '101092', description: "Required work exceeded the time allocation" },
-            { code: '101093', description: "Further work is needed by Openreach" },
-            { code: '101095', description: "Fault on the distribution side network" },
-            { code: '101107', description: "Survey" },
-            { code: '101110', description: "Safety-related hazard" },
-            { code: '101115', description: "Planning and design" },
-            { code: '101116', description: "Planning and design" },
-            { code: '101130', description: "New appointment required" },
-            { code: '101131', description: "New appointment required" },
-            { code: '101132', description: "Additional build works impacting order" },
-            { code: '101133', description: "Additional Traffic Management Act (TMA) impact" },
-            { code: '101134', description: "Order on waiters list due to network capacity issues" },
-            { code: '101146', description: "End Customer provided instructions different to those from the CP" },
-            { code: '101147', description: "Engineer missed the slot or was unable to complete installation" },
-            { code: '101148', description: "Engineer missed the slot or was unable to complete installation" },
-            { code: '1D1153', description: "Engineer missed the slot or was unable to complete installation" },
-            { code: '101158', description: "Appointment missed due to an End Customer missed scenario" },
-            { code: '101160', description: "Order passed to Network Addressing Team (NAT)" },
-            { code: '101161', description: "Order requires a survey" },
-            { code: '101163', description: "Delayed in Planning" },
-            { code: '101165', description: "The original routing is unavailable" },
-            { code: '101166', description: "Planning and design" },
-            { code: '101171', description: "Appointment missed due to an End Customer missed scenario" },
-            { code: 'Call me link', description: "Customer used the call me link" },
-            { code: 'Guide Booked Callback', description: "Guide booked a callback for customer" },
-            { code: 'No Code', description: "No specific error code provided" }
-        ];
-
-        const form = document.getElementById('ng-note-form');
-        const output = document.getElementById('output-note');
-        const historyList = document.getElementById('ng-history-list');
-        const toast = document.getElementById('ng-toast');
-        
-        // Theme
-        document.getElementById('ng-toggle-history').addEventListener('click', () => document.getElementById('note-history-sidebar').classList.add('open'));
-        document.getElementById('ng-close-history').addEventListener('click', () => document.getElementById('note-history-sidebar').classList.remove('open'));
-        
-        let lastAddedNote = '';
-
-        function addToHistory(txt) {
-            // Prevent duplicates
-            if (txt === lastAddedNote) return;
-            lastAddedNote = txt;
-
-            // Determine Title
-            let title = 'Note';
-            if (txt.includes('OFFLINE INTERACTION')) title = 'Offline Note';
-            else if (txt.includes('DI INTERACTION')) title = 'DI Note';
-
-            // Extract Time
-            // The note format uses: "Timestamp: date, time"
-            // Let's grab the time part.
-            const timeMatch = txt.match(/Timestamp:.*, (.*)/); 
-            let timeDisplay = timeMatch ? timeMatch[1] : new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            // Parse Snippet (Error code or Issue)
-            let snippet = 'General Note';
-            if (txt.includes('Error Code(s)')) {
-                 const match = txt.match(/Error Code\(s\) : (.*)/);
-                 if(match) snippet = 'Error: ' + match[1];
-            } else if (txt.includes('Issue Summary')) {
-                 const match = txt.match(/Issue Summary : (.*)/);
-                 if(match) snippet = 'Issue: ' + match[1];
-            }
-
-            const item = document.createElement('div');
-            // Styling: Card look
-            item.className = 'mb-3 p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 shadow-sm';
-            
-            item.innerHTML = `
-                <div class="flex justify-between items-center mb-2">
-                    <span class="font-bold text-sm text-indigo-700 dark:text-indigo-300">${title}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">${timeDisplay}</span>
+        function createCard(link) {
+            return `
+                <div class="util-card" onclick="window.open('${link.url}', '_blank')">
+                    <div class="util-icon">${link.icon}</div>
+                    <h3>${link.title}</h3>
+                    <p>${link.desc}</p>
                 </div>
-                <div class="text-xs text-gray-600 dark:text-gray-300 mb-3 truncate">
-                    ${snippet}
-                </div>
-                <button class="w-full py-1.5 px-2 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors text-center text-gray-700 dark:text-gray-200">
-                    Copy Note
-                </button>
             `;
+        }
 
-            // Wire up the copy button
-            const btn = item.querySelector('button');
-            btn.onclick = (e) => {
-                e.stopPropagation(); // Prevent parent click if any
+        function renderLinks(filterText = "") {
+            const filter = filterText.toLowerCase();
+            
+            const renderSection = (id, list) => {
+                const container = document.getElementById(id);
+                if (!container) return; // Safety check
                 
-                // Create a temporary textarea to use execCommand
-                const tempTextArea = document.createElement("textarea");
-                tempTextArea.value = txt;
-                document.body.appendChild(tempTextArea);
-                tempTextArea.select();
+                const filtered = list.filter(l => l.title.toLowerCase().includes(filter) || l.desc.toLowerCase().includes(filter));
                 
-                try {
-                    document.execCommand("copy");
-                    const originalText = btn.innerText;
-                    btn.innerText = "Copied! ✅";
-                    setTimeout(() => btn.innerText = originalText, 1500);
-                } catch (err) {
-                    console.error('Fallback copy failed', err);
-                    btn.innerText = "Error ❌";
-                    setTimeout(() => btn.innerText = "Copy Note", 1500);
+                container.innerHTML = filtered.map(createCard).join('');
+                container.style.display = filtered.length ? 'grid' : 'none';
+                
+                const titleEl = container.previousElementSibling;
+                if(titleEl && titleEl.classList.contains('util-section-title')) {
+                     titleEl.style.display = filtered.length ? 'block' : 'none';
                 }
-                
-                document.body.removeChild(tempTextArea);
             };
 
-            // Click card to load into editor (optional, but good UX)
-            item.onclick = (e) => {
-                if(e.target !== btn) {
-                    document.getElementById('output-note').value = txt;
-                }
-            }
-
-            historyList.prepend(item);
-
-            // Keep list manageable (max 20)
-            if (historyList.children.length > 20) {
-                historyList.removeChild(historyList.lastChild);
-            }
+            renderSection('util-grid-core', links.core);
+            // The ID in HTML was 'util-grid-tech' before, let's rename it to match 'di' if I change the HTML. 
+            // Or better, update JS to match HTML.
+            // In previous step I named the HTML id "util-grid-di".
+            renderSection('util-grid-di', links.di_tools);
+            renderSection('util-grid-hr', links.hr);
         }
 
-        // Force reset on load to "idiot proof" against sticky forms
-        window.addEventListener('load', () => {
-            form.reset();
-            generate();
-        });
-
-        // Logic
-        const businessRadios = document.querySelectorAll('input[name="business-area"]');
-        const offlineSec = document.getElementById('ng-workflow-offline');
-        const diSec = document.getElementById('ng-workflow-di');
-
-        businessRadios.forEach(r => r.addEventListener('change', e => {
-            offlineSec.classList.toggle('ng-hidden', e.target.value !== 'Offline');
-            diSec.classList.toggle('ng-hidden', e.target.value !== 'DI');
-        }));
-
-        document.querySelectorAll('input[name="di-call-from-guide"]').forEach(r => {
-            r.addEventListener('change', e => {
-                const details = document.getElementById('ng-di-guide-details');
-                if(details) details.classList.toggle('ng-hidden', e.target.value !== 'Yes');
-            });
-        });
-
-        // Populate Delays
-        const delaySelect = document.getElementById('ng-delay-reason');
-        delayReasons.forEach(d => {
-            const opt = document.createElement('option');
-            opt.value = d.text; opt.textContent = d.text;
-            delaySelect.appendChild(opt);
-        });
-
-        // Error Code Search Logic
-        function setupErrorSearch(inputId, resultsId) {
-            const input = document.getElementById(inputId);
-            const results = document.getElementById(resultsId);
-            
-            input.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                results.innerHTML = '';
-                
-                if(term.length < 1) {
-                    results.classList.add('ng-hidden');
-                    return;
-                }
-
-                const matches = errorCodes.filter(ec => 
-                    ec.code.toLowerCase().includes(term) || ec.description.toLowerCase().includes(term)
-                );
-
-                if(matches.length > 0) {
-                    results.classList.remove('ng-hidden');
-                    matches.forEach(match => {
-                        const div = document.createElement('div');
-                        div.className = 'search-result-item';
-                        div.innerHTML = `<strong>${match.code}</strong> - ${match.description}`;
-                        div.onclick = () => {
-                            input.value = match.code;
-                            results.classList.add('ng-hidden');
-                            generate();
-                        };
-                        results.appendChild(div);
-                    });
-                } else {
-                    results.classList.add('ng-hidden');
-                }
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!input.contains(e.target) && !results.contains(e.target)) {
-                    results.classList.add('ng-hidden');
-                }
-            });
-        }
-
-        setupErrorSearch('ng-delay-error-code', 'ng-error-search-results');
-        setupErrorSearch('ng-delay-error-code-2', 'ng-error-search-results-2');
-        
-        // --- LOGIC ---
-        
-        // Add 2nd Code Toggle
-        document.getElementById('ng-add-second-code').addEventListener('change', (e) => {
-             document.getElementById('ng-second-code-container').classList.toggle('ng-hidden', !e.target.checked);
-        });
-
-        // No Delay Toggle
-        document.getElementById('ng-no-delay-checkbox').addEventListener('change', (e) => {
-             document.getElementById('ng-delay-reason-group').classList.toggle('ng-hidden', e.target.checked);
-             generate();
-        });
-
-        const container = document.querySelector('#app-note-gen');
-        
-        container.querySelectorAll('input[name="customer-answered"]').forEach(r => {
-            r.addEventListener('change', e => {
-                const isNo = e.target.value === 'No';
-                document.getElementById('ng-verified-group').classList.toggle('ng-hidden', isNo);
-                if(isNo) {
-                    container.querySelectorAll('input[name="customer-verified"]').forEach(v => v.checked = false);
-                }
-                generate(); 
-            });
-        });
-
-        const resolvedChk = document.getElementById('ng-offline-resolved');
-        const noMobileChk = document.getElementById('ng-offline-no-mobile');
-        const numberInput = document.getElementById('ng-offline-number-input');
-        
-        resolvedChk.addEventListener('change', e => {
-            if(e.target.checked) {
-                noMobileChk.checked = false;
-                numberInput.disabled = false; // Ensure enabled if we just unchecked No Mobile
-            }
-            generate();
-        });
-        
-        noMobileChk.addEventListener('change', e => {
-            if(e.target.checked) {
-                resolvedChk.checked = false;
-                numberInput.value = '';
-                numberInput.disabled = true;
-            } else {
-                numberInput.disabled = false;
-            }
-            generate();
-        });
-        
-        function generate() {
-            const fd = new FormData(form);
-            const now = new Date();
-            const timeStr = now.toLocaleDateString() + ", " + now.toLocaleTimeString();
-
-            let note = ``;
-
-            if(fd.get('business-area') === 'Offline') {
-                const err1 = document.getElementById('ng-delay-error-code').value;
-                const err2 = document.getElementById('ng-delay-error-code-2').value;
-                let errors = err1 || 'N/A';
-                if(err2) errors += `, ${err2}`;
-
-                let reason = document.getElementById('ng-delay-reason').value || 'N/A';
-                if(document.getElementById('ng-no-delay-checkbox').checked) reason = "No Delay";
-
-                note += `========================================\n`;
-                note += `          OFFLINE INTERACTION           \n`;
-                note += `========================================\n`;
-                note += `Timestamp: ${timeStr}\n\n`;
-
-                note += `[ DELAY DETAILS ]\n`;
-                note += `----------------------------------------\n`;
-                note += `Error Code(s) : ${errors}\n`;
-                note += `Delay Reason  : ${reason}\n\n`;
-
-                note += `[ CONTACT ATTEMPTS ]\n`;
-                note += `----------------------------------------\n`;
-                note += `Cust Answered : ${fd.get('customer-answered') || 'N/A'}\n`;
-                if(fd.get('customer-answered') === 'Yes') {
-                    note += `Verified      : ${fd.get('customer-verified') || 'N/A'}\n`;
-                }
-                note += `SMS Sent      : Pre (${fd.get('pre-text-sent') || 'N/A'}) | Post (${fd.get('post-text-sent') || 'N/A'})\n\n`;
-
-                note += `[ RESOLUTION ]\n`;
-                note += `----------------------------------------\n`;
-                
-                let tags = [];
-                if(document.getElementById('ng-offline-resolved').checked) tags.push("#Resolved");
-                if(document.getElementById('ng-offline-no-mobile').checked) tags.push("#NoMobile");
-                const num = document.getElementById('ng-offline-number-input').value;
-                if(num) tags.push(`#${num}`);
-                
-                if(tags.length > 0) note += `Tags: ${tags.join(' ')}\n`;
-
-            } else {
-                note += `========================================\n`;
-                note += `             DI INTERACTION             \n`;
-                note += `========================================\n`;
-                note += `Timestamp: ${timeStr}\n\n`;
-                
-                note += `Call Origin   : ${fd.get('di-call-from-guide')}\n`;
-                if(fd.get('di-call-from-guide') === 'Yes') {
-                     note += `Flow          : ${document.getElementById('ng-di-albert-flow').value}\n`;
-                }
-                note += `Brand         : ${fd.get('di-brand') || 'N/A'}\n`;
-                const issue = document.getElementById('ng-di-issue-summary').value;
-                if(issue) note += `Issue Summary : ${issue}\n`;
-                note += `\n`;
-            }
-            
-            const addInfo = document.getElementById('ng-additional-info').value;
-            if(addInfo) {
-                note += `Notes:\n${addInfo}`;
-            }
-
-            output.value = note;
-        }
-        
-        // --- Auto Save Logic REMOVED per request ---
-
-        form.addEventListener('input', () => { generate(); });
-        form.addEventListener('change', () => { generate(); });
-
-        document.getElementById('ng-copy-button').addEventListener('click', () => {
-            output.select();
-            
-            // Legacy copy method for main output too
-            const tempTextArea = document.createElement("textarea");
-            tempTextArea.value = output.value;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            try {
-                document.execCommand("copy");
-            } catch (err) {
-                console.error("Copy failed", err);
-            }
-            document.body.removeChild(tempTextArea);
-
-            addToHistory(output.value);
-            toast.style.opacity = '1';
-            setTimeout(() => toast.style.opacity = '0', 2000);
-        });
-        
-        document.getElementById('ng-bottom-copy-btn').addEventListener('click', () => document.getElementById('ng-copy-button').click());
-        
-        document.getElementById('ng-reset-form-btn').addEventListener('click', () => {
-            form.reset();
-            generate();
-        });
-        
         // Init
-        generate(); 
+        renderLinks();
+        
+        // Search Listener
+        document.getElementById('util-search').addEventListener('input', (e) => {
+            renderLinks(e.target.value);
+        });
     })();
 
 </script>
