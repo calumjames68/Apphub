@@ -28,11 +28,6 @@
             --text-sub: #6b7280;
             --border-color: #e5e7eb;
             --input-bg: #ffffff;
-            
-            /* Scrollbar Colors */
-            --scroll-track: #e5e7eb;
-            --scroll-thumb: #9ca3af;
-            --scroll-thumb-hover: #6b7280;
         }
 
         /* --- DARK MODE VARIABLES --- */
@@ -44,11 +39,6 @@
             --text-sub: #9ca3af; /* Gray 400 */
             --border-color: #374151; /* Gray 700 */
             --input-bg: #374151; /* Gray 700 */
-            
-            /* Dark Scrollbar */
-            --scroll-track: #374151;
-            --scroll-thumb: #4b5563;
-            --scroll-thumb-hover: #6b7280;
         }
 
         /* --- GLOBAL STYLES --- */
@@ -60,22 +50,6 @@
             background-color: var(--bg-body);
             color: var(--text-main);
             transition: background-color 0.3s, color 0.3s;
-        }
-        
-        /* --- CUSTOM SCROLLBARS --- */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--scroll-track); 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--scroll-thumb); 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--scroll-thumb-hover); 
         }
 
         #hub-container {
@@ -267,14 +241,6 @@
             background-color: var(--input-bg);
             color: var(--text-main);
             border: 1px solid var(--border-color);
-            outline: none;
-        }
-        
-        #app-text-gen input:focus, 
-        #app-text-gen textarea:focus, 
-        #app-text-gen select:focus {
-            border-color: var(--active-color);
-            box-shadow: 0 0 0 2px var(--active-light);
         }
         
         #app-text-gen textarea::placeholder { color: var(--text-sub); opacity: 0.7; }
@@ -466,12 +432,12 @@
         .util-hidden { display: none !important; }
         
         /* Forms Modal */
-        #forms-modal {
+        #forms-modal, #generic-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 3000;
             display: none; justify-content: center; align-items: center;
         }
-        #forms-modal.open { display: flex; }
+        #forms-modal.open, #generic-modal.open { display: flex; }
         .modal-content {
             background: var(--bg-card); width: 90%; max-width: 600px;
             border-radius: 12px; padding: 2rem; max-height: 80vh; overflow-y: auto;
@@ -816,9 +782,11 @@
                     <div class="util-section-title">Core Systems</div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="util-grid-core"></div>
 
-                    <!-- DI Tools -->
+                    <!-- DI Tools (Consolidated) -->
                     <div class="util-section-title">DI Tools</div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="util-grid-di"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="util-grid-di">
+                        <!-- Will contain One View + DI Support Library Button -->
+                    </div>
 
                     <!-- HR & Admin -->
                     <div class="util-section-title">HR & Admin</div>
@@ -836,6 +804,18 @@
                          <p>Click to browse all available forms</p>
                     </div>
 
+                </div>
+            </div>
+            
+            <!-- Generic Modal -->
+            <div id="generic-modal" class="hidden">
+                <div class="modal-content relative">
+                    <span id="close-generic-modal" class="absolute top-4 right-4 text-2xl cursor-pointer">&times;</span>
+                    <h2 id="modal-title" class="text-2xl font-bold mb-4">Library</h2>
+                    <input type="text" id="modal-search" placeholder="Search..." class="w-full p-3 border rounded mb-4" style="background: var(--input-bg); border-color: var(--border-color); color: var(--text-main);">
+                    <div id="modal-list" class="grid grid-cols-1 gap-4">
+                        <!-- Items injected here -->
+                    </div>
                 </div>
             </div>
             
@@ -1075,12 +1055,14 @@
 
             // Update Note Gen Textarea
             const noteTextArea = document.getElementById('ng-additional-info');
-            const currentVal = noteTextArea.value;
-            noteTextArea.value = currentVal ? currentVal + '\n' + noteText : noteText;
+            if (noteTextArea) {
+                const currentVal = noteTextArea.value;
+                noteTextArea.value = currentVal ? currentVal + '\n' + noteText : noteText;
+                
+                // Trigger input event on the textarea so any listeners (like auto-save if re-enabled later) catch it
+                noteTextArea.dispatchEvent(new Event('input'));
+            }
 
-            // Trigger update in Note Gen
-            noteTextArea.dispatchEvent(new Event('input'));
-            
             // Show feedback
             const status = document.getElementById('tg-statusMessage');
             status.textContent = "Added to Notes!";
@@ -1172,11 +1154,10 @@
         // Initial UI Update
         updateUI();
     })();
-    
+
     /* =========================================
        APP 2 LOGIC: NOTE GENERATOR
        ========================================= */
-    
     (function() {
         // --- FULL DELAY REASONS & ERROR CODES ---
         const delayReasons = [
@@ -1589,7 +1570,16 @@
                 { title: "Openreach Portal", desc: "Dashboard", icon: "🔧", url: "https://www.openreach.co.uk/cpportal/dashboard" }
             ],
             di_tools: [
-                { title: "One View", desc: "Customer Records", icon: "👁️", url: "https://oneviewaz.nat.bt.com/azure_consumer_enu/start.swe?SWECmd=GotoView&SWEView=CUT+Home+Page+View+(CME)&SWERF=1&SWEHo=oneviewaz.nat.bt.com&SWEBU=1&SWEApplet0=Layout+Controls+Applet&SWERowId0=VRId-0" }
+                { title: "One View", desc: "Customer Records", icon: "👁️", url: "https://oneviewaz.nat.bt.com/azure_consumer_enu/start.swe?SWECmd=GotoView&SWEView=CUT+Home+Page+View+(CME)&SWERF=1&SWEHo=oneviewaz.nat.bt.com&SWEBU=1&SWEApplet0=Layout+Controls+Applet&SWERowId0=VRId-0" },
+                { title: "DI Support Library", desc: "GTCJ, OneStop, BOB...", icon: "🧰", action: "open_di_modal" }
+            ],
+            di_support: [
+                { title: "GTCJ", desc: "Support Tool", icon: "🖥️", url: "https://ngdgui.nat.bt.com/SAGUI/#/landingPage" },
+                { title: "OneStop", desc: "Support Tool", icon: "🛑", url: "https://onestop.nat.bt.com/home" },
+                { title: "BOB", desc: "Support Tool", icon: "🔧", url: "https://bobthefixer.nat.bt.com/login" },
+                { title: "DNP", desc: "Support Tool", icon: "🆔", url: "https://login.microsoftonline.com/a7f35688-9c00-4d5e-ba41-29f146377ab0/oauth2/v2.0/authorize?client_id=b43cf7e9-b046-4c76-9875-e7a684e0c94d&redirect_uri=https%3a%2f%2fprofilesupport.nat.bt.com%2fLogin&response_type=code+id_token&scope=openid+profile&state=OpenIdConnect.AuthenticationProperties%3dPQgfe1XESUkn2PCgF24OOwKCbwHhhfvdnarjiVFVDuyCKnuh2s02rY3y_VVDS5r0gRj4e4vNCi2YyeLBlGwGXmZu3zYA41Akz8kkt2prmcU6UBPveQKikUoLptJi51FllVm6iUQTM3VYXIkgCHivvRzPogdW8XIi5geg03x-KJXA9S-P&response_mode=form_post&nonce=638852299671126454.ZjA0NDIwZjYtZTJhMi00OWI1LTg0OTItMDJjYzhkM2M5YTY0ODdmN2Y1NzctYTI5Mi00ZjI2LWEzNDAtNzJlOWU1NGQxMGU4&x-client-SKU=ID_NET461&x-client-ver=7.0.3.0&sso_nonce=AwABEgEAAAADAOz_BQD0_1cnLR4HpNNH0-_v59n2BRcza0kIe0yVkP9C4GXWDaVojOn_4Fl21ODaV0-06dOVoPSRH_U2frNhPFWAcAgwF8UgAA&client-request-id=e2e823dc-22dc-416c-aff3-f36e2edc4af2&mscrid=e2e823dc-22dc-416c-aff3-f36e2edc4af2" },
+                { title: "OFS", desc: "Order Status", icon: "📦", url: "http://10.54.33.47:61051/OrderStatus/MobileCheckStatus.jsp?context=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtdGI2eGIzbml4aHEzZmRldnQzb2F5cHdtam1uZzdoeSIsImV4cCI6MTc0OTY3Nzk2MywiYXVkIjoiY3R4YXBwIiwiaXNzIjoiY3R4c3ZjIiwianRpIjoiNTczZWQ0MmItZGY1ZC00OGVjLWIzMmEtNTI5ZWM5MmYzZjE3Iiwicm9sIjpbIlJFQURFUiJdLCJyZCI6WyJ1c2VyLioiXSwid3IiOltdLCJ0dGwiOjB9.GbjQBZu6uB5MRbLvwQhc33ZAMDnvsXXC0M3kKHGhmi8&subhandle=1" },
+                { title: "Avalon", desc: "Support Tool", icon: "🛡️", url: "https://bala-con-lin-prod.nat.bt.com/psgtool_rw/login.jsp" }
             ],
             hr: [
                 { title: "HR / Payslips", desc: "SuccessFactors", icon: "💰", url: "https://performancemanager.successfactors.eu/sf/start?_s.crb=SbivFAVf2AUpxcIdG7Dfghk0QITA5TUL1IZVQavcrHQ%253d" },
@@ -1604,6 +1594,15 @@
         };
 
         function createCard(link) {
+            if (link.action) {
+                 return `
+                <div class="util-card" onclick="openGenericModal('${link.title}', '${link.action}')">
+                    <div class="util-icon">${link.icon}</div>
+                    <h3>${link.title}</h3>
+                    <p>${link.desc}</p>
+                </div>
+            `;
+            }
             return `
                 <div class="util-card" onclick="window.open('${link.url}', '_blank')">
                     <div class="util-icon">${link.icon}</div>
@@ -1613,7 +1612,70 @@
             `;
         }
         
-        // --- FORMS MODAL LOGIC ---
+        // --- GENERIC MODAL LOGIC ---
+        const genericModal = document.getElementById('generic-modal');
+        const btnCloseGeneric = document.getElementById('close-generic-modal');
+        const modalListContainer = document.getElementById('modal-list');
+        const modalSearch = document.getElementById('modal-search');
+        const modalTitle = document.getElementById('modal-title');
+        
+        let currentModalList = [];
+
+        window.openGenericModal = function(title, actionType) {
+            modalTitle.textContent = title;
+            
+            if(actionType === 'open_di_modal') {
+                currentModalList = links.di_support;
+            } else {
+                // Default or future logic
+                currentModalList = []; 
+            }
+            
+            renderModalList();
+            if(genericModal) genericModal.classList.add('open');
+            if(modalSearch) {
+                modalSearch.value = '';
+                modalSearch.focus();
+            }
+        }
+        
+        function renderModalList(filter = "") {
+            const term = filter.toLowerCase();
+            const filtered = currentModalList.filter(f => f.title.toLowerCase().includes(term) || f.desc.toLowerCase().includes(term));
+            
+            if(modalListContainer) {
+                modalListContainer.innerHTML = filtered.map(f => `
+                    <div class="flex items-center p-4 border rounded hover:bg-gray-50 cursor-pointer" onclick="window.open('${f.url}', '_blank')">
+                        <div class="text-2xl mr-4">${f.icon}</div>
+                        <div>
+                            <div class="font-bold text-lg" style="color: var(--text-main);">${f.title}</div>
+                            <div class="text-sm" style="color: var(--text-sub);">${f.desc}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        if(btnCloseGeneric) {
+            btnCloseGeneric.addEventListener('click', () => {
+                genericModal.classList.remove('open');
+            });
+        }
+        
+        if(modalSearch) {
+            modalSearch.addEventListener('input', (e) => {
+                renderModalList(e.target.value);
+            });
+        }
+        
+        if(genericModal) {
+            genericModal.addEventListener('click', (e) => {
+                if (e.target === genericModal) genericModal.classList.remove('open');
+            });
+        }
+
+
+        // --- FORMS MODAL LOGIC (Specific) ---
         const formsModal = document.getElementById('forms-modal');
         const btnOpenForms = document.getElementById('btn-open-forms');
         const btnCloseForms = document.getElementById('close-forms-modal');
@@ -1624,34 +1686,47 @@
             const term = filter.toLowerCase();
             const filtered = links.forms.filter(f => f.title.toLowerCase().includes(term) || f.desc.toLowerCase().includes(term));
             
-            formsListContainer.innerHTML = filtered.map(f => `
-                <div class="flex items-center p-4 border rounded hover:bg-gray-50 cursor-pointer" onclick="window.open('${f.url}', '_blank')">
-                    <div class="text-2xl mr-4">${f.icon}</div>
-                    <div>
-                        <div class="font-bold text-lg" style="color: var(--text-main);">${f.title}</div>
-                        <div class="text-sm" style="color: var(--text-sub);">${f.desc}</div>
+            if(formsListContainer) {
+                formsListContainer.innerHTML = filtered.map(f => `
+                    <div class="flex items-center p-4 border rounded hover:bg-gray-50 cursor-pointer" onclick="window.open('${f.url}', '_blank')">
+                        <div class="text-2xl mr-4">${f.icon}</div>
+                        <div>
+                            <div class="font-bold text-lg" style="color: var(--text-main);">${f.title}</div>
+                            <div class="text-sm" style="color: var(--text-sub);">${f.desc}</div>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            }
         }
 
-        btnOpenForms.addEventListener('click', () => {
-            renderFormsList();
-            formsModal.classList.add('open');
-        });
+        if(btnOpenForms) {
+            btnOpenForms.addEventListener('click', () => {
+                renderFormsList();
+                formsModal.classList.add('open');
+                if(formsSearch) {
+                    formsSearch.value = '';
+                    formsSearch.focus();
+                }
+            });
+        }
         
-        btnCloseForms.addEventListener('click', () => {
-            formsModal.classList.remove('open');
-        });
+        if(btnCloseForms) {
+            btnCloseForms.addEventListener('click', () => {
+                formsModal.classList.remove('open');
+            });
+        }
         
-        formsSearch.addEventListener('input', (e) => {
-            renderFormsList(e.target.value);
-        });
+        if(formsSearch) {
+            formsSearch.addEventListener('input', (e) => {
+                renderFormsList(e.target.value);
+            });
+        }
         
-        // Close modal on outside click
-        formsModal.addEventListener('click', (e) => {
-            if (e.target === formsModal) formsModal.classList.remove('open');
-        });
+        if(formsModal) {
+            formsModal.addEventListener('click', (e) => {
+                if (e.target === formsModal) formsModal.classList.remove('open');
+            });
+        }
 
 
         function renderLinks(filterText = "") {
@@ -1659,7 +1734,7 @@
             
             const renderSection = (id, list) => {
                 const container = document.getElementById(id);
-                if (!container) return; // Safety check
+                if (!container) return; 
                 
                 const filtered = list.filter(l => l.title.toLowerCase().includes(filter) || l.desc.toLowerCase().includes(filter));
                 
@@ -1674,22 +1749,30 @@
 
             renderSection('util-grid-core', links.core);
             renderSection('util-grid-di', links.di_tools);
+            renderSection('util-grid-di-support', links.di_support);
             renderSection('util-grid-hr', links.hr);
             
-            // Also filter forms when typing in main search (even if they are hidden in modal usually)
-            // We will show matched forms in a special results area above the button
+            // Also filter forms and DI Support hidden items when typing in main search
             const formsResultsContainer = document.getElementById('util-grid-forms-results');
             const formsBtn = document.getElementById('btn-open-forms');
             
             if(filterText.trim() === "") {
-                formsResultsContainer.style.display = 'none';
-                formsResultsContainer.innerHTML = '';
-                formsBtn.style.display = 'flex'; // Show button
+                if(formsResultsContainer) {
+                    formsResultsContainer.style.display = 'none';
+                    formsResultsContainer.innerHTML = '';
+                }
+                if(formsBtn) formsBtn.style.display = 'flex'; 
             } else {
-                const filteredForms = links.forms.filter(f => f.title.toLowerCase().includes(filter) || f.desc.toLowerCase().includes(filter));
-                formsResultsContainer.innerHTML = filteredForms.map(createCard).join('');
-                formsResultsContainer.style.display = filteredForms.length ? 'grid' : 'none';
-                formsBtn.style.display = 'none'; // Hide button while searching
+                // Combine hidden lists for search results
+                const hiddenItems = [...links.forms, ...links.di_support];
+                const filteredHidden = hiddenItems.filter(f => f.title.toLowerCase().includes(filter) || f.desc.toLowerCase().includes(filter));
+                
+                if(formsResultsContainer) {
+                    formsResultsContainer.innerHTML = filteredHidden.map(createCard).join('');
+                    formsResultsContainer.style.display = filteredHidden.length ? 'grid' : 'none';
+                }
+                
+                if(formsBtn) formsBtn.style.display = 'none'; 
             }
         }
 
@@ -1697,9 +1780,12 @@
         renderLinks();
         
         // Search Listener
-        document.getElementById('util-search').addEventListener('input', (e) => {
-            renderLinks(e.target.value);
-        });
+        const utilSearch = document.getElementById('util-search');
+        if(utilSearch) {
+            utilSearch.addEventListener('input', (e) => {
+                renderLinks(e.target.value);
+            });
+        }
     })();
 
 </script>
