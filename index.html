@@ -435,7 +435,7 @@
                     </div>
 
                     <!-- Step 2: Type -->
-                    <div id="tg-step-type" class="mb-6">
+                    <div id="tg-step-type" class="mb-6 tg-hidden">
                         <label class="block text-sm font-bold mb-2">2. Message Type</label>
                         <div class="flex gap-2 flex-wrap">
                             <input type="radio" id="typePre" name="type" value="pre">
@@ -836,12 +836,10 @@
             if (!s) return; 
             let txt = selections.brand === 'BT' ? s.bt_template : s.ee_template;
             
-            // Date logic: Use manual parsing to fix off-by-one errors
             const dateVal = document.getElementById('tg-delayStartDate').value;
             if(s.delayDays > 0 && dateVal) {
                  const [y, m, d] = dateVal.split('-').map(Number);
-                 const dateObj = new Date(y, m - 1, d); // Month is 0-indexed
-                 
+                 const dateObj = new Date(y, m - 1, d);
                  dateObj.setDate(dateObj.getDate() + s.delayDays);
                  const dateStr = dateObj.toLocaleDateString('en-GB');
                  txt = txt.replace(/{date}/g, dateStr);
@@ -852,17 +850,14 @@
                  txt = txt.replace(/{date}/g, dateStr);
             }
              
-            // Handle Nocontact logic if applicable
              if(selections.contact === 'No') {
                 if (s.bt_template_nocontact && s.ee_template_nocontact) {
                      txt = selections.brand === 'BT' ? s.bt_template_nocontact : s.ee_template_nocontact;
                 } else {
-                     // Only add prefix if it's not already part of a specific no-contact template
                      const cleanMessage = txt.replace(/^Hi there[\.,]?\s*/i, '').replace(/^Hi[\.,]?\s*/i, '');
                      txt = "Sorry I couldn't reach you. " + cleanMessage;
                 }
              } else if (selections.contact === 'Yes') {
-                // Logic to handle Greetings
                 const originalHasGreeting = txt.toLowerCase().startsWith('hi');
                 if (originalHasGreeting) {
                     const cleanMessage = txt.replace(/^Hi there[\.,]?\s*/i, '').replace(/^Hi[\.,]?\s*/i, '');
@@ -902,7 +897,7 @@
 
             // Trigger update in Note Gen
             noteTextArea.dispatchEvent(new Event('input'));
-            // saveAutoSave(); // Auto save removed per request
+            saveAutoSave(); // Save to local storage immediately
 
             // Show feedback
             const status = document.getElementById('tg-statusMessage');
@@ -979,21 +974,24 @@
 
         document.getElementById('tg-resetButton').addEventListener('click', () => {
              selections.brand = null; selections.type = null; selections.category = null; selections.contact = null; selections.scenarioId = null;
+             
+             // Reset all radios visually
              container.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
-             // Ensure visually no radio is checked initially after reset
-             const inputs = container.querySelectorAll('input[type="radio"]');
-             for(let i=0; i<inputs.length; i++) { inputs[i].checked = false; }
              
              scenarioInput.value = ''; msgOutput.value = '';
              updateUI();
         });
         
+        // Initial UI Update
         updateUI();
     })();
 
     /* =========================================
        APP 2 LOGIC: NOTE GENERATOR
        ========================================= */
+    // Define helper functions globally so they can be used by Text Gen
+    let saveAutoSave; 
+
     (function() {
         // --- FULL DELAY REASONS & ERROR CODES ---
         const delayReasons = [
@@ -1088,12 +1086,89 @@
         document.getElementById('ng-toggle-history').addEventListener('click', () => document.getElementById('note-history-sidebar').classList.add('open'));
         document.getElementById('ng-close-history').addEventListener('click', () => document.getElementById('note-history-sidebar').classList.remove('open'));
         
+        let lastAddedNote = '';
+
         function addToHistory(txt) {
-            const div = document.createElement('div');
-            div.className = 'text-sm p-2 border rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700';
-            div.textContent = txt.substring(0, 40) + '...';
-            div.onclick = () => { output.value = txt; };
-            historyList.prepend(div);
+            // Prevent duplicates
+            if (txt === lastAddedNote) return;
+            lastAddedNote = txt;
+
+            // Determine Title
+            let title = 'Note';
+            if (txt.includes('OFFLINE INTERACTION')) title = 'Offline Note';
+            else if (txt.includes('DI INTERACTION')) title = 'DI Note';
+
+            // Extract Time
+            // The note format uses: "Timestamp: date, time"
+            // Let's grab the time part.
+            const timeMatch = txt.match(/Timestamp:.*, (.*)/); 
+            let timeDisplay = timeMatch ? timeMatch[1] : new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Parse Snippet (Error code or Issue)
+            let snippet = 'General Note';
+            if (txt.includes('Error Code(s)')) {
+                 const match = txt.match(/Error Code\(s\) : (.*)/);
+                 if(match) snippet = 'Error: ' + match[1];
+            } else if (txt.includes('Issue Summary')) {
+                 const match = txt.match(/Issue Summary : (.*)/);
+                 if(match) snippet = 'Issue: ' + match[1];
+            }
+
+            const item = document.createElement('div');
+            // Styling: Card look
+            item.className = 'mb-3 p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 shadow-sm';
+            
+            item.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold text-sm text-indigo-700 dark:text-indigo-300">${title}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">${timeDisplay}</span>
+                </div>
+                <div class="text-xs text-gray-600 dark:text-gray-300 mb-3 truncate">
+                    ${snippet}
+                </div>
+                <button class="w-full py-1.5 px-2 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors text-center text-gray-700 dark:text-gray-200">
+                    Copy Note
+                </button>
+            `;
+
+            // Wire up the copy button
+            const btn = item.querySelector('button');
+            btn.onclick = (e) => {
+                e.stopPropagation(); // Prevent parent click if any
+                
+                // Create a temporary textarea to use execCommand
+                const tempTextArea = document.createElement("textarea");
+                tempTextArea.value = txt;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                
+                try {
+                    document.execCommand("copy");
+                    const originalText = btn.innerText;
+                    btn.innerText = "Copied! ✅";
+                    setTimeout(() => btn.innerText = originalText, 1500);
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                    btn.innerText = "Error ❌";
+                    setTimeout(() => btn.innerText = "Copy Note", 1500);
+                }
+                
+                document.body.removeChild(tempTextArea);
+            };
+
+            // Click card to load into editor (optional, but good UX)
+            item.onclick = (e) => {
+                if(e.target !== btn) {
+                    document.getElementById('output-note').value = txt;
+                }
+            }
+
+            historyList.prepend(item);
+
+            // Keep list manageable (max 20)
+            if (historyList.children.length > 20) {
+                historyList.removeChild(historyList.lastChild);
+            }
         }
 
         // Force reset on load to "idiot proof" against sticky forms
@@ -1173,7 +1248,7 @@
         setupErrorSearch('ng-delay-error-code', 'ng-error-search-results');
         setupErrorSearch('ng-delay-error-code-2', 'ng-error-search-results-2');
         
-        // --- FIXES ---
+        // --- LOGIC ---
         
         // Add 2nd Code Toggle
         document.getElementById('ng-add-second-code').addEventListener('change', (e) => {
@@ -1290,12 +1365,27 @@
 
             output.value = note;
         }
+        
+        // --- Auto Save Logic REMOVED per request ---
 
         form.addEventListener('input', () => { generate(); });
         form.addEventListener('change', () => { generate(); });
 
         document.getElementById('ng-copy-button').addEventListener('click', () => {
-            output.select(); document.execCommand('copy');
+            output.select();
+            
+            // Legacy copy method for main output too
+            const tempTextArea = document.createElement("textarea");
+            tempTextArea.value = output.value;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            try {
+                document.execCommand("copy");
+            } catch (err) {
+                console.error("Copy failed", err);
+            }
+            document.body.removeChild(tempTextArea);
+
             addToHistory(output.value);
             toast.style.opacity = '1';
             setTimeout(() => toast.style.opacity = '0', 2000);
